@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(pnpm add:*)",
+      "Bash(where:*)",
+      "Bash(cmd /c \"where pnpm\")",
+      "Bash(cmd /c \"where pnpm 2>&1 && where npm 2>&1 && where node 2>&1\")",
+      "Bash(powershell -Command:*)",
+      "Bash(cmd /c \"echo %PATH%\")",
+      "Bash(cmd /c:*)",
+      "Bash(cmd.exe /c \"cd /d \"\"C:\\\\Users\\\\Juan Manuel\\\\Desktop\\\\sorteo\"\" && node -v && pnpm -v\")",
+      "Bash(cmd.exe /c \"node -v\")",
+      "Bash(cmd.exe /c \"node -v 2>&1 && echo NODE_OK || echo NODE_FAIL\")",
+      "Bash(/mnt/c/Windows/System32/cmd.exe /c \"node -v\")",
+      "Bash(echo:*)",
+      "Bash(printenv:*)",
+      "Bash(tr:*)",
+      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(npm root:*)",
+      "Bash(export PATH=\"/c/Program Files/nodejs:/c/Users/Juan Manuel/AppData/Roaming/npm:$PATH\")",
+      "Bash(pnpm:*)",
+      "Bash(npm ls:*)",
+      "Bash(corepack enable:*)",
+      "Bash(corepack prepare:*)",
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(node test-scrape.mjs:*)",
+      "Bash(node -e \":*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
