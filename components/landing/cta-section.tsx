@@ -16,8 +16,8 @@ export function CTASection() {
           className="relative"
         >
           {/* Main card */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-[#FF8A80] to-accent p-1">
-            <div className="relative rounded-[1.4rem] bg-gradient-to-br from-primary/95 via-[#FF8A80]/95 to-accent/95 p-8 sm:p-12 lg:p-16">
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-[#9B44D8] to-accent p-1">
+            <div className="relative rounded-[1.4rem] bg-gradient-to-br from-primary/95 via-[#9B44D8]/95 to-accent/95 p-8 sm:p-12 lg:p-16">
               {/* Decorative elements */}
               <div className="absolute inset-0 overflow-hidden">
                 <motion.div
@@ -72,7 +72,7 @@ export function CTASection() {
                 </h2>
                 
                 <p className="mt-6 text-lg text-white/80 max-w-xl mx-auto">
-                  Unete a miles de marcas e influencers que ya confian en SorteoWeb para sus sorteos de Instagram.
+                  Unete a miles de marcas e influencers que ya confian en SorteosWeb para sus sorteos de Instagram.
                 </p>
 
                 <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -104,7 +104,7 @@ export function CTASection() {
                     Sin registro requerido
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-[#FED766]" />
+                    <div className="w-2 h-2 rounded-full bg-[#B76EF0]" />
                     100% gratis
                   </div>
                   <div className="flex items-center gap-2">

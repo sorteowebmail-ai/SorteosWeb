@@ -31,11 +31,11 @@ interface FAQItem {
 }
 
 const categories = [
-  { id: "all", label: "Todas", icon: HelpCircle, color: "#FF6B6B" },
+  { id: "all", label: "Todas", icon: HelpCircle, color: "#820AD1" },
   { id: "getting-started", label: "Comenzar", icon: Zap, color: "#4ECDC4" },
   { id: "instagram", label: "Instagram", icon: Instagram, color: "#C792EA" },
-  { id: "features", label: "Funciones", icon: Gift, color: "#FED766" },
-  { id: "pricing", label: "Precios", icon: CreditCard, color: "#FF9F43" },
+  { id: "features", label: "Funciones", icon: Gift, color: "#B76EF0" },
+  { id: "pricing", label: "Precios", icon: CreditCard, color: "#D2248F" },
   { id: "security", label: "Seguridad", icon: Shield, color: "#45B7D1" },
 ];
 
@@ -43,15 +43,15 @@ const faqs: FAQItem[] = [
   // Getting Started
   {
     category: "getting-started",
-    question: "Como hacer un sorteo en Instagram con SorteoWeb?",
+    question: "Como hacer un sorteo en Instagram con SorteosWeb?",
     answer:
-      "Es muy sencillo: solo tienes que pegar el enlace de tu publicacion de Instagram, configurar las opciones del sorteo (numero de ganadores, filtros, etc.) y hacer clic en 'Sortear'. SorteoWeb se encarga de cargar los comentarios y seleccionar ganadores de forma aleatoria y transparente. No necesitas iniciar sesion ni compartir tus credenciales.",
+      "Es muy sencillo: solo tienes que pegar el enlace de tu publicacion de Instagram, configurar las opciones del sorteo (numero de ganadores, filtros, etc.) y hacer clic en 'Sortear'. SorteosWeb se encarga de cargar los comentarios y seleccionar ganadores de forma aleatoria y transparente. No necesitas iniciar sesion ni compartir tus credenciales.",
   },
   {
     category: "getting-started",
-    question: "Necesito crear una cuenta para usar SorteoWeb?",
+    question: "Necesito crear una cuenta para usar SorteosWeb?",
     answer:
-      "No, SorteoWeb esta disenado para ser lo mas simple posible. Puedes hacer sorteos sin necesidad de registrarte. Para funciones avanzadas como historial de sorteos y certificados personalizados, puedes crear una cuenta gratuita opcional.",
+      "No, SorteosWeb esta disenado para ser lo mas simple posible. Puedes hacer sorteos sin necesidad de registrarte. Para funciones avanzadas como historial de sorteos y certificados personalizados, puedes crear una cuenta gratuita opcional.",
   },
   {
     category: "getting-started",
@@ -63,7 +63,7 @@ const faqs: FAQItem[] = [
     category: "getting-started",
     question: "Puedo hacer un sorteo desde mi celular?",
     answer:
-      "Si, SorteoWeb funciona perfectamente desde cualquier dispositivo. La plataforma esta optimizada para moviles, tablets y computadoras. No necesitas descargar ninguna aplicacion.",
+      "Si, SorteosWeb funciona perfectamente desde cualquier dispositivo. La plataforma esta optimizada para moviles, tablets y computadoras. No necesitas descargar ninguna aplicacion.",
   },
 
   // Instagram
@@ -103,7 +103,7 @@ const faqs: FAQItem[] = [
     category: "features",
     question: "Que filtros puedo aplicar a los participantes?",
     answer:
-      "SorteoWeb ofrece filtros avanzados: eliminar comentarios duplicados del mismo usuario, requerir un numero minimo de menciones (@amigos), excluir cuentas especificas, establecer longitud minima de comentario, y filtrar por palabras clave. Puedes combinar multiples filtros segun las reglas de tu sorteo.",
+      "SorteosWeb ofrece filtros avanzados: eliminar comentarios duplicados del mismo usuario, requerir un numero minimo de menciones (@amigos), excluir cuentas especificas, establecer longitud minima de comentario, y filtrar por palabras clave. Puedes combinar multiples filtros segun las reglas de tu sorteo.",
   },
   {
     category: "features",
@@ -115,7 +115,7 @@ const faqs: FAQItem[] = [
     category: "features",
     question: "Como comparto los resultados del sorteo?",
     answer:
-      "SorteoWeb genera multiples formatos para compartir: certificado oficial en imagen, animaciones personalizadas para historias de Instagram (formato 9:16) y posts (formato 1:1), y la opcion de grabar la pantalla durante la seleccion del ganador. Todo disenado para generar confianza con tu audiencia.",
+      "SorteosWeb genera multiples formatos para compartir: certificado oficial en imagen, animaciones personalizadas para historias de Instagram (formato 9:16) y posts (formato 1:1), y la opcion de grabar la pantalla durante la seleccion del ganador. Todo disenado para generar confianza con tu audiencia.",
   },
   {
     category: "features",
@@ -133,7 +133,7 @@ const faqs: FAQItem[] = [
   // Pricing
   {
     category: "pricing",
-    question: "Es gratis usar SorteoWeb?",
+    question: "Es gratis usar SorteosWeb?",
     answer:
       "Si, ofrecemos un plan gratuito que permite sorteos en publicaciones de hasta 500 comentarios. Para sorteos mas grandes o funciones premium, ofrecemos planes accesibles de pago unico (sin suscripciones).",
   },
@@ -153,13 +153,13 @@ const faqs: FAQItem[] = [
     category: "pricing",
     question: "Puedo obtener factura de mi compra?",
     answer:
-      "Si, enviamos factura automaticamente al correo registrado. Si necesitas una factura con datos fiscales especificos, contactanos a soporte@sorteoweb.app con los datos de facturacion.",
+      "Si, enviamos factura automaticamente al correo registrado. Si necesitas una factura con datos fiscales especificos, contactanos a soporte@sorteosweb.app con los datos de facturacion.",
   },
 
   // Security
   {
     category: "security",
-    question: "Es seguro usar SorteoWeb?",
+    question: "Es seguro usar SorteosWeb?",
     answer:
       "Absolutamente. Nunca pedimos tu contrasena de Instagram ni acceso a tu cuenta. Solo leemos los comentarios publicos de la publicacion que nos indicas. Usamos conexiones encriptadas (HTTPS) y no almacenamos informacion sensible.",
   },
@@ -271,7 +271,7 @@ export default function FAQPage() {
       <section className="relative overflow-hidden border-b border-border/50 bg-gradient-to-b from-secondary/30 to-background pt-24 pb-16">
         {/* Background shapes */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-[#FF6B6B]/10 blur-3xl" />
+          <div className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-[#820AD1]/10 blur-3xl" />
           <div className="absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-[#4ECDC4]/10 blur-3xl" />
         </div>
 
@@ -288,7 +288,7 @@ export default function FAQPage() {
               Preguntas Frecuentes
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-              Todo lo que necesitas saber sobre SorteoWeb. Si no encuentras tu
+              Todo lo que necesitas saber sobre SorteosWeb. Si no encuentras tu
               respuesta, no dudes en contactarnos.
             </p>
 
@@ -409,7 +409,7 @@ export default function FAQPage() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary to-[#FF8A80] p-8 md:p-12 text-center"
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary to-[#9B44D8] p-8 md:p-12 text-center"
           >
             {/* Background decoration */}
             <div className="absolute inset-0 pointer-events-none">

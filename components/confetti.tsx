@@ -13,12 +13,12 @@ interface ConfettiPiece {
 }
 
 const COLORS = [
-  "#FF6B6B", // coral
+  "#820AD1", // coral
   "#4ECDC4", // mint
   "#45B7D1", // sky
-  "#FED766", // sunshine
+  "#B76EF0", // sunshine
   "#C792EA", // lavender
-  "#FF9F43", // orange
+  "#D2248F", // orange
 ];
 
 export function Confetti({ active = false }: { active?: boolean }) {

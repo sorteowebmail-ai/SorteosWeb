@@ -51,7 +51,7 @@ export function HeroSection() {
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-balance">
               <span className="text-foreground">Sorteos de Instagram </span>
               <span className="relative">
-                <span className="bg-gradient-to-r from-primary via-[#FF8A80] to-accent bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-primary via-[#9B44D8] to-accent bg-clip-text text-transparent">
                   faciles y divertidos
                 </span>
                 <motion.svg
@@ -70,7 +70,7 @@ export function HeroSection() {
                   />
                   <defs>
                     <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#FF6B6B" />
+                      <stop offset="0%" stopColor="#820AD1" />
                       <stop offset="100%" stopColor="#4ECDC4" />
                     </linearGradient>
                   </defs>
@@ -103,7 +103,7 @@ export function HeroSection() {
               <Link href="/sorteo/nuevo">
                 <Button
                   size="lg"
-                  className="w-full sm:w-auto gap-2 text-base px-8 bg-gradient-to-r from-primary to-[#FF8A80] hover:opacity-90 shadow-xl shadow-primary/30 transition-all hover:shadow-primary/40 hover:scale-[1.02]"
+                  className="w-full sm:w-auto gap-2 text-base px-8 bg-gradient-to-r from-primary to-[#9B44D8] hover:opacity-90 shadow-xl shadow-primary/30 transition-all hover:shadow-primary/40 hover:scale-[1.02]"
                 >
                   <Sparkles className="w-5 h-5" />
                   Crear Sorteo Gratis
@@ -198,7 +198,7 @@ export function HeroSection() {
                   <div className="space-y-3">
                     <p className="text-sm font-medium text-muted-foreground">Ganador seleccionado:</p>
                     <motion.div
-                      className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-[#FED766]/20 to-[#FF8A80]/20 border-2 border-[#FED766]/30"
+                      className="flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-[#B76EF0]/20 to-[#9B44D8]/20 border-2 border-[#B76EF0]/30"
                       animate={{ scale: [1, 1.02, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     >
@@ -219,7 +219,7 @@ export function HeroSection() {
                   </div>
 
                   {/* Action button */}
-                  <Button className="w-full bg-gradient-to-r from-primary to-[#FF8A80] hover:opacity-90 shadow-lg">
+                  <Button className="w-full bg-gradient-to-r from-primary to-[#9B44D8] hover:opacity-90 shadow-lg">
                     <Sparkles className="w-4 h-4 mr-2" />
                     Seleccionar Nuevo Ganador
                   </Button>
@@ -228,7 +228,7 @@ export function HeroSection() {
 
               {/* Floating elements */}
               <motion.div
-                className="absolute -top-4 -right-4 w-20 h-20 rounded-2xl bg-[#FED766] shadow-lg flex items-center justify-center"
+                className="absolute -top-4 -right-4 w-20 h-20 rounded-2xl bg-[#B76EF0] shadow-lg flex items-center justify-center"
                 animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
                 transition={{ duration: 4, repeat: Infinity }}
               >

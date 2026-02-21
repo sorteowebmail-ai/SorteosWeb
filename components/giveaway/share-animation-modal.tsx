@@ -43,7 +43,7 @@ const animationStyles: {
     id: "confetti",
     name: "Confetti",
     description: "Colorido y festivo",
-    colors: ["#FF6B6B", "#4ECDC4", "#FED766", "#FF9F43"],
+    colors: ["#820AD1", "#4ECDC4", "#B76EF0", "#D2248F"],
   },
   {
     id: "elegant",
@@ -61,13 +61,13 @@ const animationStyles: {
     id: "minimal",
     name: "Minimal",
     description: "Simple y limpio",
-    colors: ["#ffffff", "#f5f5f5", "#333333", "#FF6B6B"],
+    colors: ["#ffffff", "#f5f5f5", "#333333", "#820AD1"],
   },
   {
     id: "party",
     name: "Fiesta",
     description: "Alegre y vibrante",
-    colors: ["#ff6b6b", "#feca57", "#48dbfb", "#ff9ff3"],
+    colors: ["#820ad1", "#b76ef0", "#48dbfb", "#ff9ff3"],
   },
   {
     id: "gradient",
@@ -89,7 +89,7 @@ export function ShareAnimationModal({
   winners,
   postUrl,
   logoDataUrl,
-  accentColor = "#FF6B6B",
+  accentColor = "#820AD1",
   isFreeGiveaway = false,
   backupWinners = [],
 }: ShareAnimationModalProps) {
@@ -153,7 +153,7 @@ export function ShareAnimationModal({
     canvas.height = dims.height;
 
     // Dynamic colors: use accentColor as first color
-    const dynamicColors = [accentColor, "#4ECDC4", "#FED766", "#C792EA", "#45B7D1", "#FF9F43"];
+    const dynamicColors = [accentColor, "#4ECDC4", "#B76EF0", "#C792EA", "#45B7D1", "#D2248F"];
 
     // Background
     if (selectedStyle === "elegant") {
@@ -408,7 +408,7 @@ export function ShareAnimationModal({
     }
     ctx.fillText("Sorteo realizado con", dims.width / 2, footerY);
 
-    // SorteoWeb branding
+    // SorteosWeb branding
     ctx.font = "bold 16px system-ui";
     if (selectedStyle === "neon") {
       ctx.fillStyle = "#00ff88";
@@ -417,7 +417,7 @@ export function ShareAnimationModal({
     } else {
       ctx.fillStyle = "#ffffff";
     }
-    ctx.fillText("SorteoWeb", dims.width / 2, footerY + 22);
+    ctx.fillText("SorteosWeb", dims.width / 2, footerY + 22);
 
     ctx.font = "20px system-ui";
     ctx.fillText("✨", dims.width / 2 - 60, footerY + 22);
@@ -434,8 +434,8 @@ export function ShareAnimationModal({
       ctx.fillStyle = selectedStyle === "minimal"
         ? "rgba(0,0,0,0.06)"
         : "rgba(255,255,255,0.08)";
-      ctx.fillText("SorteoWeb", 0, -dims.height * 0.15);
-      ctx.fillText("SorteoWeb", 0, dims.height * 0.15);
+      ctx.fillText("SorteosWeb", 0, -dims.height * 0.15);
+      ctx.fillText("SorteosWeb", 0, dims.height * 0.15);
       ctx.restore();
     }
 
@@ -505,7 +505,7 @@ export function ShareAnimationModal({
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = `sorteo-sorteoweb-${selectedRatio}-${Date.now()}.png`;
+          a.download = `sorteo-sorteosweb-${selectedRatio}-${Date.now()}.png`;
           a.click();
           URL.revokeObjectURL(url);
         }
@@ -668,7 +668,7 @@ export function ShareAnimationModal({
                 <Button
                   onClick={handleExport}
                   disabled={isExporting}
-                  className="w-full h-14 rounded-xl bg-gradient-to-r from-primary to-[#FF8A80] hover:opacity-90 text-lg font-semibold"
+                  className="w-full h-14 rounded-xl bg-gradient-to-r from-primary to-[#9B44D8] hover:opacity-90 text-lg font-semibold"
                 >
                   {isExporting ? (
                     <>

@@ -16,7 +16,7 @@ interface WinnerSlotMachineProps {
   onShuffleReady?: () => void;
 }
 
-const COLORS = ["#FF6B6B", "#4ECDC4", "#FED766", "#C792EA", "#45B7D1", "#FF9F43"];
+const COLORS = ["#820AD1", "#4ECDC4", "#B76EF0", "#C792EA", "#45B7D1", "#D2248F"];
 
 export function WinnerSlotMachine({
   participants,
@@ -139,10 +139,10 @@ export function WinnerSlotMachine({
           <motion.div
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="w-20 h-20 rounded-full bg-gradient-to-r from-[#FF6B6B] via-[#FED766] to-[#4ECDC4] mx-auto mb-6 flex items-center justify-center"
+            className="w-20 h-20 rounded-full bg-gradient-to-r from-[#820AD1] via-[#B76EF0] to-[#4ECDC4] mx-auto mb-6 flex items-center justify-center"
           >
             <div className="w-16 h-16 rounded-full bg-card flex items-center justify-center">
-              <Sparkles className="h-8 w-8 text-[#FED766]" />
+              <Sparkles className="h-8 w-8 text-[#B76EF0]" />
             </div>
           </motion.div>
 
@@ -186,13 +186,13 @@ export function WinnerSlotMachine({
           className="text-center w-full max-w-lg"
         >
           <div className="mb-6">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FED766]/20 text-[#D4A84B] font-medium">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#B76EF0]/20 text-[#9B44D8] font-medium">
               <Trophy className="w-4 h-4" />
               Seleccionando ganador {currentWinnerIndex + 1} de {numberOfWinners}
             </span>
           </div>
 
-          <div className="relative h-48 w-full overflow-hidden rounded-3xl border-2 border-[#FED766] bg-gradient-to-b from-[#FED766]/5 to-card shadow-xl shadow-[#FED766]/10">
+          <div className="relative h-48 w-full overflow-hidden rounded-3xl border-2 border-[#B76EF0] bg-gradient-to-b from-[#B76EF0]/5 to-card shadow-xl shadow-[#B76EF0]/10">
             <div className="absolute inset-0 bg-gradient-to-b from-card via-transparent to-card z-10 pointer-events-none" />
             <div className="flex h-full flex-col items-center justify-center">
               <AnimatePresence mode="wait">
@@ -208,11 +208,11 @@ export function WinnerSlotMachine({
                       animate={{ rotate: [0, 10, -10, 0] }}
                       transition={{ duration: 0.5, repeat: 3 }}
                     >
-                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FED766] to-[#FF9F43] flex items-center justify-center shadow-lg">
+                      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#B76EF0] to-[#D2248F] flex items-center justify-center shadow-lg">
                         <Trophy className="h-8 w-8 text-white" />
                       </div>
                     </motion.div>
-                    <span className="text-3xl font-bold bg-gradient-to-r from-[#FED766] to-[#FF9F43] bg-clip-text text-transparent">
+                    <span className="text-3xl font-bold bg-gradient-to-r from-[#B76EF0] to-[#D2248F] bg-clip-text text-transparent">
                       @{displayedNames[0]}
                     </span>
                   </motion.div>
@@ -282,12 +282,12 @@ export function WinnerSlotMachine({
           >
             <div className="relative mx-auto w-32 h-32">
               <motion.div
-                className="absolute inset-0 rounded-full bg-gradient-to-r from-[#FF6B6B] via-[#FED766] to-[#4ECDC4]"
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-[#820AD1] via-[#B76EF0] to-[#4ECDC4]"
                 animate={{ rotate: 360 }}
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
               />
               <div className="absolute inset-2 rounded-full bg-card flex items-center justify-center">
-                <PartyPopper className="h-12 w-12 text-[#FED766]" />
+                <PartyPopper className="h-12 w-12 text-[#B76EF0]" />
               </div>
             </div>
           </motion.div>

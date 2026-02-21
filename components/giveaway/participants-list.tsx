@@ -12,7 +12,7 @@ interface ParticipantsListProps {
   highlightedIds?: string[];
 }
 
-const WINNER_COLORS = ["#FF6B6B", "#4ECDC4", "#FED766", "#C792EA", "#45B7D1", "#FF9F43"];
+const WINNER_COLORS = ["#820AD1", "#4ECDC4", "#B76EF0", "#C792EA", "#45B7D1", "#D2248F"];
 
 export function ParticipantsList({
   participants,
@@ -76,7 +76,7 @@ export function ParticipantsList({
               animate={{ opacity: 1 }}
               transition={{ delay: index * 0.02 }}
               className={`flex items-start gap-4 border-b border-border/50 last:border-b-0 p-4 transition-colors ${
-                isWinner ? "bg-[#FED766]/5" : "hover:bg-secondary/30"
+                isWinner ? "bg-[#B76EF0]/5" : "hover:bg-secondary/30"
               }`}
               style={{
                 borderLeftWidth: isWinner ? "4px" : "0",
@@ -99,7 +99,7 @@ export function ParticipantsList({
                 {isWinner && (
                   <div
                     className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                    style={{ backgroundColor: winnerColor || "#FED766" }}
+                    style={{ backgroundColor: winnerColor || "#B76EF0" }}
                   >
                     {winnerIndex + 1}
                   </div>
@@ -115,7 +115,7 @@ export function ParticipantsList({
                   {isWinner && (
                     <Badge
                       className="gap-1 text-white"
-                      style={{ backgroundColor: winnerColor || "#FED766" }}
+                      style={{ backgroundColor: winnerColor || "#B76EF0" }}
                     >
                       <Crown className="w-3 h-3" />
                       Ganador #{winnerIndex + 1}
@@ -137,7 +137,7 @@ export function ParticipantsList({
                 >
                   <Trophy
                     className="w-6 h-6"
-                    style={{ color: winnerColor || "#FED766" }}
+                    style={{ color: winnerColor || "#B76EF0" }}
                   />
                 </motion.div>
               )}

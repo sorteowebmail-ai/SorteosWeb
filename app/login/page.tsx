@@ -50,11 +50,11 @@ export default function LoginPage() {
         <div className="bg-card rounded-3xl border border-border/50 shadow-xl p-8">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary via-[#FF8A80] to-accent flex items-center justify-center shadow-lg shadow-primary/25 mx-auto mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary via-[#9B44D8] to-accent flex items-center justify-center shadow-lg shadow-primary/25 mx-auto mb-4">
               <Gift className="w-8 h-8 text-primary-foreground" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">
-              Iniciar sesion en SorteoWeb
+              Iniciar sesion en SorteosWeb
             </h1>
             <p className="mt-2 text-muted-foreground">
               Conecta tu cuenta de Instagram para empezar a hacer sorteos
@@ -114,8 +114,8 @@ export default function LoginPage() {
                 </div>
               </div>
               <div className="flex items-start gap-3 text-sm">
-                <div className="w-8 h-8 rounded-lg bg-[#FF9F43]/10 flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-4 h-4 text-[#FF9F43]" />
+                <div className="w-8 h-8 rounded-lg bg-[#D2248F]/10 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-4 h-4 text-[#D2248F]" />
                 </div>
                 <div>
                   <p className="font-medium text-foreground">Seguridad garantizada</p>
@@ -129,7 +129,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Al continuar, aceptas los Terminos de Servicio y Politica de Privacidad de SorteoWeb.
+          Al continuar, aceptas los Terminos de Servicio y Politica de Privacidad de SorteosWeb.
         </p>
       </motion.div>
     </div>

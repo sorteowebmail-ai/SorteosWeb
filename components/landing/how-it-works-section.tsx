@@ -12,7 +12,7 @@ const steps = [
     title: "Pega el enlace",
     description:
       "Copia el enlace de tu publicacion de Instagram y pegalo en nuestra plataforma. Aceptamos posts, reels y carruseles.",
-    color: "#FF6B6B",
+    color: "#820AD1",
     bgColor: "rgba(255, 107, 107, 0.1)",
   },
   {
@@ -30,7 +30,7 @@ const steps = [
     title: "Inicia el sorteo",
     description:
       "Presiona el boton y disfruta de la animacion mientras se selecciona al ganador de forma aleatoria.",
-    color: "#FED766",
+    color: "#B76EF0",
     bgColor: "rgba(254, 215, 102, 0.1)",
   },
   {
@@ -72,7 +72,7 @@ export function HowItWorksSection() {
           viewport={{ once: true }}
           className="text-center max-w-3xl mx-auto mb-20"
         >
-          <span className="inline-block px-4 py-2 rounded-full bg-[#FED766]/20 text-[#D4A84B] text-sm font-medium mb-4">
+          <span className="inline-block px-4 py-2 rounded-full bg-[#B76EF0]/20 text-[#9B44D8] text-sm font-medium mb-4">
             Super Facil
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
@@ -80,7 +80,7 @@ export function HowItWorksSection() {
             <span className="relative inline-block">
               <span className="relative z-10">4 simples pasos</span>
               <motion.span
-                className="absolute bottom-2 left-0 w-full h-3 bg-[#FED766]/30 -z-0"
+                className="absolute bottom-2 left-0 w-full h-3 bg-[#B76EF0]/30 -z-0"
                 initial={{ scaleX: 0 }}
                 whileInView={{ scaleX: 1 }}
                 viewport={{ once: true }}
@@ -98,7 +98,7 @@ export function HowItWorksSection() {
         <div className="relative">
           {/* Connection line - desktop */}
           <div className="hidden lg:block absolute top-24 left-[12.5%] right-[12.5%] h-1">
-            <div className="w-full h-full bg-gradient-to-r from-[#FF6B6B] via-[#4ECDC4] via-[#FED766] to-[#C792EA] rounded-full opacity-30" />
+            <div className="w-full h-full bg-gradient-to-r from-[#820AD1] via-[#4ECDC4] via-[#B76EF0] to-[#C792EA] rounded-full opacity-30" />
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -167,7 +167,7 @@ export function HowItWorksSection() {
           <Link href="/sorteo/nuevo">
             <Button
               size="lg"
-              className="gap-2 px-8 bg-gradient-to-r from-primary to-[#FF8A80] hover:opacity-90 shadow-xl shadow-primary/25"
+              className="gap-2 px-8 bg-gradient-to-r from-primary to-[#9B44D8] hover:opacity-90 shadow-xl shadow-primary/25"
             >
               Comenzar Ahora
               <ArrowRight className="w-4 h-4" />

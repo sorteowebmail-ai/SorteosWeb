@@ -1,5 +1,5 @@
 -- ============================================
--- SorteoWeb Database Schema
+-- SorteosWeb Database Schema
 -- Ejecutar en Supabase SQL Editor
 -- ============================================
 

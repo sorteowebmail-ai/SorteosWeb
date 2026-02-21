@@ -28,17 +28,17 @@ export function Header() {
               whileHover={{ rotate: [0, -10, 10, 0] }}
               transition={{ duration: 0.5 }}
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-[#FF8A80] to-accent flex items-center justify-center shadow-lg shadow-primary/25">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-[#9B44D8] to-accent flex items-center justify-center shadow-lg shadow-primary/25">
                 <Gift className="w-5 h-5 text-primary-foreground" />
               </div>
               <motion.div
-                className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#FED766]"
+                className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#B76EF0]"
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               />
             </motion.div>
             <span className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              SorteoWeb
+              SorteosWeb
             </span>
           </Link>
 
@@ -60,7 +60,7 @@ export function Header() {
             <Link href="/sorteo/nuevo">
               <Button
                 size="sm"
-                className="gap-2 bg-gradient-to-r from-primary to-[#FF8A80] hover:opacity-90 transition-opacity shadow-lg shadow-primary/25"
+                className="gap-2 bg-gradient-to-r from-primary to-[#9B44D8] hover:opacity-90 transition-opacity shadow-lg shadow-primary/25"
               >
                 <Sparkles className="w-4 h-4" />
                 Crear Sorteo
@@ -106,7 +106,7 @@ export function Header() {
               ))}
               <div className="pt-4 border-t border-border/50">
                 <Link href="/sorteo/nuevo" className="block" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full gap-2 bg-gradient-to-r from-primary to-[#FF8A80]">
+                  <Button className="w-full gap-2 bg-gradient-to-r from-primary to-[#9B44D8]">
                     <Sparkles className="w-4 h-4" />
                     Crear Sorteo
                   </Button>

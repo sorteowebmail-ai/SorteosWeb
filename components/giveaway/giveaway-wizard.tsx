@@ -51,12 +51,12 @@ interface PostInfo {
 }
 
 const steps = [
-  { id: 1, name: "Publicacion", icon: Instagram, color: "#FF6B6B" },
+  { id: 1, name: "Publicacion", icon: Instagram, color: "#820AD1" },
   { id: 2, name: "Filtros", icon: Settings, color: "#4ECDC4" },
-  { id: 3, name: "Sortear", icon: Play, color: "#FED766" },
+  { id: 3, name: "Sortear", icon: Play, color: "#B76EF0" },
 ]
 
-const ACCENT_PRESETS = ["#FF6B6B", "#4ECDC4", "#FED766", "#C792EA", "#45B7D1", "#FF9F43"]
+const ACCENT_PRESETS = ["#820AD1", "#4ECDC4", "#B76EF0", "#C792EA", "#45B7D1", "#D2248F"]
 
 export function GiveawayWizard() {
   const router = useRouter()
@@ -75,7 +75,7 @@ export function GiveawayWizard() {
     minCommentLength: 0,
     keywordFilter: [],
     backupWinners: 0,
-    accentColor: "#FF6B6B",
+    accentColor: "#820AD1",
     logoDataUrl: null,
   })
   const [excludeInput, setExcludeInput] = useState("")
@@ -305,7 +305,7 @@ export function GiveawayWizard() {
                         className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
                         style={{ backgroundColor: "rgba(255, 107, 107, 0.1)" }}
                       >
-                        <Instagram className="w-8 h-8 text-[#FF6B6B]" />
+                        <Instagram className="w-8 h-8 text-[#820AD1]" />
                       </div>
                       <h2 className="text-2xl font-bold text-foreground">
                         Pega el enlace de Instagram
@@ -339,7 +339,7 @@ export function GiveawayWizard() {
                         <Button
                           onClick={handleVerifyPost}
                           disabled={!isValidInstagramUrl(postUrl) || verifying}
-                          className="h-14 px-6 rounded-xl bg-gradient-to-r from-primary to-[#FF8A80] hover:opacity-90"
+                          className="h-14 px-6 rounded-xl bg-gradient-to-r from-primary to-[#9B44D8] hover:opacity-90"
                         >
                           {verifying ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
@@ -475,8 +475,8 @@ export function GiveawayWizard() {
                       {/* Winners */}
                       <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50 space-y-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#FED766]/20 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-[#D4A84B]" />
+                          <div className="w-10 h-10 rounded-xl bg-[#B76EF0]/20 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-[#9B44D8]" />
                           </div>
                           <Label className="font-medium text-foreground">
                             Ganadores
@@ -551,8 +551,8 @@ export function GiveawayWizard() {
                       <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-[#FF6B6B]/20 flex items-center justify-center">
-                              <Hash className="w-5 h-5 text-[#FF6B6B]" />
+                            <div className="w-10 h-10 rounded-xl bg-[#820AD1]/20 flex items-center justify-center">
+                              <Hash className="w-5 h-5 text-[#820AD1]" />
                             </div>
                             <div>
                               <Label className="font-medium text-foreground">
@@ -579,8 +579,8 @@ export function GiveawayWizard() {
                     {/* Exclude accounts */}
                     <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50 space-y-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#FF9F43]/20 flex items-center justify-center">
-                          <UserX className="w-5 h-5 text-[#FF9F43]" />
+                        <div className="w-10 h-10 rounded-xl bg-[#D2248F]/20 flex items-center justify-center">
+                          <UserX className="w-5 h-5 text-[#D2248F]" />
                         </div>
                         <div>
                           <Label className="font-medium text-foreground">
@@ -667,8 +667,8 @@ export function GiveawayWizard() {
                     {/* Backup winners */}
                     <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50 space-y-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#FF9F43]/20 flex items-center justify-center">
-                          <UserPlus className="w-5 h-5 text-[#FF9F43]" />
+                        <div className="w-10 h-10 rounded-xl bg-[#D2248F]/20 flex items-center justify-center">
+                          <UserPlus className="w-5 h-5 text-[#D2248F]" />
                         </div>
                         <div className="flex-1">
                           <Label className="font-medium text-foreground">
@@ -679,7 +679,7 @@ export function GiveawayWizard() {
                           </p>
                         </div>
                         {settings.backupWinners > 0 && (
-                          <Badge className="bg-[#FF9F43]/20 text-[#FF9F43] border-0">+$1.000</Badge>
+                          <Badge className="bg-[#D2248F]/20 text-[#D2248F] border-0">+$1.000</Badge>
                         )}
                       </div>
                       <Input
@@ -842,7 +842,7 @@ export function GiveawayWizard() {
                         className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
                         style={{ backgroundColor: "rgba(254, 215, 102, 0.1)" }}
                       >
-                        <Sparkles className="w-8 h-8 text-[#D4A84B]" />
+                        <Sparkles className="w-8 h-8 text-[#9B44D8]" />
                       </div>
                       <h2 className="text-2xl font-bold text-foreground">
                         Todo listo para sortear
@@ -879,7 +879,7 @@ export function GiveawayWizard() {
                         <span className="text-muted-foreground">Ganadores</span>
                         <Badge
                           variant="secondary"
-                          className="bg-[#FED766]/20 text-[#D4A84B]"
+                          className="bg-[#B76EF0]/20 text-[#9B44D8]"
                         >
                           {settings.numberOfWinners}
                         </Badge>
@@ -917,7 +917,7 @@ export function GiveawayWizard() {
                           </span>
                           <Badge
                             variant="secondary"
-                            className="bg-[#FF9F43]/20 text-[#FF9F43]"
+                            className="bg-[#D2248F]/20 text-[#D2248F]"
                           >
                             {settings.excludeAccounts.length}
                           </Badge>
@@ -956,7 +956,7 @@ export function GiveawayWizard() {
                           </span>
                           <Badge
                             variant="secondary"
-                            className="bg-[#FF9F43]/20 text-[#FF9F43]"
+                            className="bg-[#D2248F]/20 text-[#D2248F]"
                           >
                             {settings.backupWinners}
                           </Badge>
@@ -1024,7 +1024,7 @@ export function GiveawayWizard() {
                     <Button
                       onClick={handleNext}
                       disabled={!canProceed()}
-                      className="gap-2 h-12 px-8 rounded-xl bg-gradient-to-r from-primary to-[#FF8A80] hover:opacity-90 shadow-lg shadow-primary/25"
+                      className="gap-2 h-12 px-8 rounded-xl bg-gradient-to-r from-primary to-[#9B44D8] hover:opacity-90 shadow-lg shadow-primary/25"
                     >
                       Siguiente
                       <ArrowRight className="h-4 w-4" />
@@ -1033,7 +1033,7 @@ export function GiveawayWizard() {
                     <Button
                       onClick={handleStartGiveaway}
                       disabled={isLoading}
-                      className="gap-2 h-12 px-8 rounded-xl bg-gradient-to-r from-[#FED766] to-[#FF9F43] text-foreground hover:opacity-90 shadow-lg shadow-[#FED766]/25"
+                      className="gap-2 h-12 px-8 rounded-xl bg-gradient-to-r from-[#B76EF0] to-[#D2248F] text-foreground hover:opacity-90 shadow-lg shadow-[#B76EF0]/25"
                     >
                       {isLoading ? (
                         <>

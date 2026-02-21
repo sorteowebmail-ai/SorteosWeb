@@ -3,7 +3,7 @@ import { Footer } from "@/components/footer"
 import { GiveawayWizard } from "@/components/giveaway/giveaway-wizard"
 
 export const metadata = {
-  title: "Crear Nuevo Sorteo - SorteoWeb",
+  title: "Crear Nuevo Sorteo - SorteosWeb",
   description: "Configura y realiza un nuevo sorteo de Instagram de forma fácil y transparente."
 }
 

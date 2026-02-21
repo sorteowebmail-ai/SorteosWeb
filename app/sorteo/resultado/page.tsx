@@ -4,7 +4,7 @@ import { Footer } from "@/components/footer"
 import { GiveawayResultView } from "@/components/giveaway/giveaway-result-view"
 
 export const metadata = {
-  title: "Resultado del Sorteo - SorteoWeb",
+  title: "Resultado del Sorteo - SorteosWeb",
   description: "Mira los ganadores de tu sorteo de Instagram."
 }
 

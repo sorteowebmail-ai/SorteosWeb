@@ -31,7 +31,7 @@ import { filterParticipants } from "@/lib/giveaway-store"
 import { calculateGiveawayPrice } from "@/lib/pricing"
 import type { Participant, GiveawaySettings } from "@/lib/types"
 
-const DEFAULT_COLORS = ["#FF6B6B", "#4ECDC4", "#FED766", "#C792EA", "#45B7D1", "#FF9F43"]
+const DEFAULT_COLORS = ["#820AD1", "#4ECDC4", "#B76EF0", "#C792EA", "#45B7D1", "#D2248F"]
 
 export function GiveawayResultView() {
   const router = useRouter()
@@ -146,7 +146,7 @@ export function GiveawayResultView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           price,
-          title: `Sorteo Instagram - SorteoWeb`,
+          title: `Sorteo Instagram - SorteosWeb`,
         }),
       })
 
@@ -191,7 +191,7 @@ export function GiveawayResultView() {
     await new Promise((resolve) => setTimeout(resolve, 500))
 
     const content = `
-CERTIFICADO DE SORTEO - SORTEOWEB
+CERTIFICADO DE SORTEO - SORTEOSWEB
 ================================
 Fecha: ${new Date().toLocaleDateString("es-ES", {
       weekday: "long",
@@ -218,15 +218,15 @@ ${winners.map((w, i) => `${i + 1}. @${w.username} - "${w.comment}"`).join("\n")}
 ${backupWinnersList.length > 0 ? `\nSUPLENTES:\n${backupWinnersList.map((w, i) => `${i + 1}. @${w.username} - "${w.comment}"`).join("\n")}\n` : ""}
 ================================
 Metodo de seleccion: crypto.getRandomValues() (aleatorio criptografico)
-Sorteo realizado con SorteoWeb
-https://sorteoweb.app
+Sorteo realizado con SorteosWeb
+https://sorteosweb.app
     `.trim()
 
     const blob = new Blob([content], { type: "text/plain" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `sorteo-sorteoweb-${new Date().toISOString().split("T")[0]}.txt`
+    a.download = `sorteo-sorteosweb-${new Date().toISOString().split("T")[0]}.txt`
     a.click()
     URL.revokeObjectURL(url)
 
@@ -234,11 +234,11 @@ https://sorteoweb.app
   }
 
   const handleShare = async () => {
-    const text = `Ganador${winners.length > 1 ? "es" : ""} del sorteo:\n${winners.map((w) => `@${w.username}`).join("\n")}\n\nSorteo realizado con @sorteoweb`
+    const text = `Ganador${winners.length > 1 ? "es" : ""} del sorteo:\n${winners.map((w) => `@${w.username}`).join("\n")}\n\nSorteo realizado con @sorteosweb`
 
     if (navigator.share) {
       await navigator.share({
-        title: "Resultado del Sorteo - SorteoWeb",
+        title: "Resultado del Sorteo - SorteosWeb",
         text,
       })
     } else {
@@ -319,7 +319,7 @@ https://sorteoweb.app
                           transition={{ duration: 2, repeat: Infinity }}
                           className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center"
                         >
-                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-[#FF8A80] flex items-center justify-center shadow-lg">
+                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-[#9B44D8] flex items-center justify-center shadow-lg">
                             <Lock className="w-7 h-7 text-white" />
                           </div>
                         </motion.div>
@@ -441,9 +441,9 @@ https://sorteoweb.app
                   transition={{ type: "spring", bounce: 0.5 }}
                   className="relative w-24 h-24 mx-auto mb-6"
                 >
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#FF6B6B] via-[#FED766] to-[#4ECDC4] animate-spin-slow" />
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#820AD1] via-[#B76EF0] to-[#4ECDC4] animate-spin-slow" />
                   <div className="absolute inset-1 rounded-full bg-card flex items-center justify-center">
-                    <Trophy className="h-10 w-10 text-[#FED766]" />
+                    <Trophy className="h-10 w-10 text-[#B76EF0]" />
                   </div>
                 </motion.div>
                 <h1 className="text-3xl lg:text-4xl font-bold text-foreground">
@@ -529,7 +529,7 @@ https://sorteoweb.app
               <div className="flex flex-wrap justify-center gap-3">
                 <Button
                   onClick={() => setShowShareModal(true)}
-                  className="gap-2 h-12 px-6 rounded-xl bg-gradient-to-r from-primary to-[#FF8A80] hover:opacity-90 shadow-lg"
+                  className="gap-2 h-12 px-6 rounded-xl bg-gradient-to-r from-primary to-[#9B44D8] hover:opacity-90 shadow-lg"
                 >
                   <Video className="h-4 w-4" />
                   Crear para Instagram
@@ -582,7 +582,7 @@ https://sorteoweb.app
                   icon: Users,
                   value: allParticipants.length,
                   label: "Total comentarios",
-                  color: "#FF6B6B",
+                  color: "#820AD1",
                 },
                 {
                   icon: Filter,
@@ -594,7 +594,7 @@ https://sorteoweb.app
                   icon: Trophy,
                   value: winners.length,
                   label: "Ganadores",
-                  color: "#FED766",
+                  color: "#B76EF0",
                 },
                 {
                   icon: Calendar,
@@ -689,7 +689,7 @@ https://sorteoweb.app
                     <p className="text-sm text-muted-foreground mb-1">
                       Cuentas excluidas
                     </p>
-                    <Badge variant="secondary" className="bg-[#FF9F43]/10 text-[#FF9F43]">
+                    <Badge variant="secondary" className="bg-[#D2248F]/10 text-[#D2248F]">
                       {settings.excludeAccounts.length || "Ninguna"}
                     </Badge>
                   </div>

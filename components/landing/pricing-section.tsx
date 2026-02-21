@@ -137,7 +137,7 @@ export function PricingSection() {
             {/* Card header */}
             <div className="p-8 pb-0">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-[#FF8A80] to-accent flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-[#9B44D8] to-accent flex items-center justify-center">
                   <Gift className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div>

@@ -22,7 +22,7 @@ const features = [
     title: "Carga Masiva",
     description:
       "Importa miles de comentarios desde cualquier publicacion de Instagram en segundos.",
-    color: "#FF6B6B",
+    color: "#820AD1",
     bgColor: "rgba(255, 107, 107, 0.1)",
   },
   {
@@ -46,7 +46,7 @@ const features = [
     title: "Exporta Resultados",
     description:
       "Descarga certificados en PDF o comparte directamente en tus redes.",
-    color: "#FED766",
+    color: "#B76EF0",
     bgColor: "rgba(254, 215, 102, 0.1)",
   },
   {
@@ -62,7 +62,7 @@ const features = [
     title: "100% Transparente",
     description:
       "Genera certificados de sorteo para demostrar la legitimidad del proceso.",
-    color: "#FF9F43",
+    color: "#D2248F",
     bgColor: "rgba(255, 159, 67, 0.1)",
   },
 ];

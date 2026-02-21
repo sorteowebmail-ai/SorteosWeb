@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const preferenceBody: Record<string, unknown> = {
       items: [
         {
-          title: title || "Sorteo Instagram - SorteoWeb",
+          title: title || "Sorteo Instagram - SorteosWeb",
           unit_price: price,
           quantity: 1,
           currency_id: "ARS",

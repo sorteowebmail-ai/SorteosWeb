@@ -8,7 +8,7 @@ const _plusJakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "50
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'SorteoWeb - Sorteos de Instagram Profesionales',
+  title: 'SorteosWeb - Sorteos de Instagram Profesionales',
   description: 'La plataforma más profesional para realizar sorteos en Instagram. Selecciona ganadores de comentarios y publicaciones de forma justa y transparente.',
   generator: 'v0.app',
   icons: {

@@ -31,11 +31,11 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-[#FF8A80] to-accent flex items-center justify-center shadow-lg shadow-primary/25 transition-transform group-hover:scale-105">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary via-[#9B44D8] to-accent flex items-center justify-center shadow-lg shadow-primary/25 transition-transform group-hover:scale-105">
                 <Gift className="w-5 h-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold text-foreground">
-                SorteoWeb
+                SorteosWeb
               </span>
             </Link>
             <p className="mt-4 text-muted-foreground max-w-xs">
@@ -117,7 +117,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} SorteoWeb. Todos los derechos reservados.
+            © {new Date().getFullYear()} SorteosWeb. Todos los derechos reservados.
           </p>
           <p className="text-sm text-muted-foreground flex items-center gap-1">
             Hecho con <Heart className="w-4 h-4 text-primary fill-primary" /> para la comunidad
