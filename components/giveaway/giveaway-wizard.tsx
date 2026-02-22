@@ -82,9 +82,7 @@ export function GiveawayWizard() {
   const [excludeInput, setExcludeInput] = useState("")
   const [keywordInput, setKeywordInput] = useState("")
   const [loadingProgress, setLoadingProgress] = useState<{
-    current: number
-    total: number
-    percent: number
+    fetched: number
     done: boolean
   } | null>(null)
 
@@ -173,14 +171,8 @@ export function GiveawayWizard() {
     while (hasMore) {
       try {
         page++
-        const displayTotal = Math.max(allComments.length, postInfo.commentCount)
-        const pct = displayTotal > 0
-          ? Math.min(Math.round((allComments.length / displayTotal) * 100), 99)
-          : 0
         setLoadingProgress({
-          current: allComments.length,
-          total: displayTotal,
-          percent: pct,
+          fetched: allComments.length,
           done: false,
         })
 
@@ -218,9 +210,7 @@ export function GiveawayWizard() {
     }
 
     setLoadingProgress({
-      current: allComments.length,
-      total: allComments.length,
-      percent: 100,
+      fetched: allComments.length,
       done: true,
     })
 
@@ -1001,35 +991,42 @@ export function GiveawayWizard() {
                         animate={{ opacity: 1 }}
                         className="max-w-lg mx-auto p-5 rounded-xl bg-secondary/30 border border-border/50"
                       >
-                        <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-3">
                           {loadingProgress.done ? (
                             <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
                           ) : (
                             <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
                           )}
-                          <p className="text-sm text-foreground">
-                            {loadingProgress.done
-                              ? `${loadingProgress.current.toLocaleString("es-AR")} comentarios procesados`
-                              : "Procesando comentarios del post..."}
-                          </p>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-foreground">
+                              {loadingProgress.done
+                                ? `${loadingProgress.fetched.toLocaleString("es-AR")} comentarios procesados`
+                                : "Procesando comentarios del post..."}
+                            </p>
+                            {!loadingProgress.done && loadingProgress.fetched > 0 && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {loadingProgress.fetched.toLocaleString("es-AR")} recopilados
+                              </p>
+                            )}
+                          </div>
                         </div>
 
-                        {/* Progress bar */}
-                        <div className="w-full h-1.5 bg-border/50 rounded-full overflow-hidden mb-2">
-                          <motion.div
-                            className="h-full bg-primary rounded-full"
-                            initial={{ width: "0%" }}
-                            animate={{ width: `${loadingProgress.percent}%` }}
-                            transition={{ duration: 0.3, ease: "easeOut" }}
-                          />
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>
-                            {loadingProgress.current.toLocaleString("es-AR")} de{" "}
-                            {loadingProgress.total.toLocaleString("es-AR")}
-                          </span>
-                          <span>{loadingProgress.percent}%</span>
+                        {/* Indeterminate progress bar during loading, full bar on done */}
+                        <div className="w-full h-1 bg-border/50 rounded-full overflow-hidden mt-3">
+                          {loadingProgress.done ? (
+                            <motion.div
+                              className="h-full bg-primary rounded-full"
+                              initial={{ width: "0%" }}
+                              animate={{ width: "100%" }}
+                              transition={{ duration: 0.4, ease: "easeOut" }}
+                            />
+                          ) : (
+                            <motion.div
+                              className="h-full bg-primary rounded-full w-1/3"
+                              animate={{ x: ["-100%", "300%"] }}
+                              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                            />
+                          )}
                         </div>
                       </motion.div>
                     )}
