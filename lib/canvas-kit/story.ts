@@ -5,7 +5,11 @@ import {
   drawLogo,
   drawWatermark,
   drawGoldOrnament,
-  heroFontSize,
+  drawGanadorBadge,
+  drawConfetti,
+  drawAccentGlow,
+  drawWinnerName,
+  hexToRgba,
 } from "./helpers"
 
 export function drawStory(
@@ -16,21 +20,40 @@ export function drawStory(
   const { W, H } = params
   const s = STYLES[style]
 
-  // Background
+  // ── Background ─────────────────────────────────
   s.bgDraw(ctx, W, H, params.accentColor)
 
-  // Logo — top-left, 8% of W
+  // ── Confetti decoration ────────────────────────
+  drawConfetti(ctx, W, H, s.confettiColors, 60, 42, {
+    yMin: 0,
+    yMax: H * 0.25,
+    sizeRange: [4, 14],
+    alphaRange: [0.06, 0.22],
+  })
+  drawConfetti(ctx, W, H, s.confettiColors, 40, 99, {
+    yMin: H * 0.65,
+    yMax: H,
+    sizeRange: [3, 10],
+    alphaRange: [0.04, 0.15],
+  })
+
+  // ── Logo — top-left ────────────────────────────
   if (params.logoImage) {
-    const size = Math.round(W * 0.08)
-    const border = style === "elegante" ? "rgba(212,175,55,0.3)" : undefined
-    drawLogo(ctx, params.logoImage, W * 0.06, H * 0.04, size, 8, border)
+    const size = Math.round(W * 0.085)
+    const border =
+      style === "elegante"
+        ? "rgba(212,175,55,0.3)"
+        : style === "corporativo"
+          ? params.accentColor
+          : undefined
+    drawLogo(ctx, params.logoImage, W * 0.06, H * 0.038, size, 10, border)
   }
 
-  // Giveaway name — centered
+  // ── Giveaway name — centered ───────────────────
   ctx.save()
   ctx.textAlign = "center"
   ctx.textBaseline = "middle"
-  ctx.font = `600 ${Math.round(W * 0.032)}px ${s.fontFamily}`
+  ctx.font = `600 ${Math.round(W * 0.030)}px ${s.fontFamily}`
   ctx.fillStyle = style === "elegante" ? s.goldAccent! : s.textSecondary
   ctx.letterSpacing = "4px"
   ctx.fillText(
@@ -41,84 +64,151 @@ export function drawStory(
   ctx.letterSpacing = "0px"
   ctx.restore()
 
-  // Separator under name
+  // ── Separator under name ───────────────────────
   if (style === "elegante") {
-    drawGoldOrnament(ctx, W / 2, H * 0.15, W * 0.15, s.goldAccent!)
+    drawGoldOrnament(ctx, W / 2, H * 0.155, W * 0.18, s.goldAccent!)
   } else {
-    ctx.beginPath()
-    ctx.moveTo(W * 0.2, H * 0.15)
-    ctx.lineTo(W * 0.8, H * 0.15)
-    ctx.strokeStyle = s.separatorColor
-    ctx.lineWidth = 1
-    ctx.stroke()
-  }
-
-  // "GANADOR" label
-  ctx.save()
-  ctx.textAlign = "center"
-  ctx.textBaseline = "middle"
-  ctx.font = `300 ${Math.round(W * 0.028)}px ${s.fontFamily}`
-  ctx.fillStyle = style === "elegante" ? s.goldAccent! : s.labelColor
-  ctx.letterSpacing = "6px"
-  ctx.fillText("GANADOR", W / 2, H * 0.32)
-  ctx.letterSpacing = "0px"
-  ctx.restore()
-
-  // Winner username — HERO
-  const username = `@${params.winner.username}`
-  const fontSize = heroFontSize(username, W)
-  ctx.save()
-  ctx.textAlign = "center"
-  ctx.textBaseline = "middle"
-  ctx.font = `700 ${fontSize}px system-ui, sans-serif`
-  ctx.fillStyle = s.textPrimary
-  if (style === "elegante") {
-    ctx.shadowColor = "rgba(212,175,55,0.3)"
-    ctx.shadowBlur = 30
-  }
-  ctx.fillText(truncateText(ctx, username, W * 0.88), W / 2, H * 0.42)
-  ctx.restore()
-
-  // Lower separator
-  if (style === "elegante") {
-    drawGoldOrnament(ctx, W / 2, H * 0.55, W * 0.15, s.goldAccent!)
-  } else if (style === "corporativo") {
-    drawCorporativoDataCard(ctx, params, W, H)
-  } else {
-    ctx.beginPath()
-    ctx.moveTo(W * 0.25, H * 0.55)
-    ctx.lineTo(W * 0.75, H * 0.55)
-    ctx.strokeStyle = s.separatorColor
-    ctx.lineWidth = 1
-    ctx.stroke()
-  }
-
-  // Metadata lines (minimal & elegante)
-  if (style !== "corporativo") {
+    // Subtle gradient line
     ctx.save()
-    ctx.textAlign = "center"
-    ctx.textBaseline = "middle"
-    ctx.font = `400 ${Math.round(W * 0.024)}px system-ui, sans-serif`
-    ctx.fillStyle = s.textMuted
-
-    const spacing = H * 0.035
-    ctx.fillText(params.dateString, W / 2, H * 0.60)
-    ctx.fillText(
-      `${params.totalComments.toLocaleString("es-AR")} comentarios analizados`,
-      W / 2,
-      H * 0.60 + spacing,
-    )
-    ctx.fillText(params.verificationId, W / 2, H * 0.60 + spacing * 2)
+    const lineGrad = ctx.createLinearGradient(W * 0.15, 0, W * 0.85, 0)
+    lineGrad.addColorStop(0, "transparent")
+    lineGrad.addColorStop(0.3, s.separatorColor)
+    lineGrad.addColorStop(0.7, s.separatorColor)
+    lineGrad.addColorStop(1, "transparent")
+    ctx.beginPath()
+    ctx.moveTo(W * 0.15, H * 0.155)
+    ctx.lineTo(W * 0.85, H * 0.155)
+    ctx.strokeStyle = lineGrad
+    ctx.lineWidth = 1
+    ctx.stroke()
     ctx.restore()
   }
 
-  // Watermark
+  // ── Accent glow behind winner ──────────────────
+  drawAccentGlow(
+    ctx,
+    W / 2,
+    H * 0.40,
+    W * 0.5,
+    style === "elegante" ? "#D4AF37" : params.accentColor,
+    style === "elegante" ? 0.08 : 0.06,
+  )
+
+  // ── "GANADOR" badge ────────────────────────────
+  drawGanadorBadge(ctx, W / 2, H * 0.30, W, style, params.accentColor)
+
+  // ── Winner username — HERO ─────────────────────
+  drawWinnerName(
+    ctx,
+    params.winner.username,
+    W / 2,
+    H * 0.40,
+    W,
+    style,
+    params.accentColor,
+  )
+
+  // ── Lower section ──────────────────────────────
+  if (style === "elegante") {
+    drawGoldOrnament(ctx, W / 2, H * 0.52, W * 0.18, s.goldAccent!)
+    drawEleganteMetadata(ctx, params, W, H)
+  } else if (style === "corporativo") {
+    drawCorporativoDataCard(ctx, params, W, H)
+  } else {
+    drawMinimalMetadata(ctx, params, W, H)
+  }
+
+  // ── Watermark ──────────────────────────────────
   if (params.isFreeGiveaway) {
     drawWatermark(ctx, W, H, s.isLight)
   }
 }
 
-// ── Corporativo data card ──────────────────────────
+// ── Minimal metadata lines ──────────────────────────
+
+function drawMinimalMetadata(
+  ctx: CanvasRenderingContext2D,
+  params: DrawParams,
+  W: number,
+  H: number,
+): void {
+  const s = STYLES.minimal
+
+  // Thin separator
+  ctx.save()
+  const lineGrad = ctx.createLinearGradient(W * 0.2, 0, W * 0.8, 0)
+  lineGrad.addColorStop(0, "transparent")
+  lineGrad.addColorStop(0.3, s.separatorColor)
+  lineGrad.addColorStop(0.7, s.separatorColor)
+  lineGrad.addColorStop(1, "transparent")
+  ctx.beginPath()
+  ctx.moveTo(W * 0.2, H * 0.54)
+  ctx.lineTo(W * 0.8, H * 0.54)
+  ctx.strokeStyle = lineGrad
+  ctx.lineWidth = 1
+  ctx.stroke()
+  ctx.restore()
+
+  // Metadata items with icons
+  ctx.save()
+  ctx.textAlign = "center"
+  ctx.textBaseline = "middle"
+  ctx.font = `400 ${Math.round(W * 0.022)}px system-ui, -apple-system, sans-serif`
+  ctx.fillStyle = s.textMuted
+
+  const spacing = H * 0.035
+  const baseY = H * 0.59
+
+  ctx.fillText(params.dateString, W / 2, baseY)
+  ctx.fillText(
+    `${params.totalComments.toLocaleString("es-AR")} comentarios analizados`,
+    W / 2,
+    baseY + spacing,
+  )
+
+  // Verification ID with accent
+  ctx.font = `500 ${Math.round(W * 0.020)}px system-ui, -apple-system, sans-serif`
+  ctx.fillStyle = hexToRgba(params.accentColor, 0.5)
+  ctx.fillText(params.verificationId, W / 2, baseY + spacing * 2)
+
+  ctx.restore()
+}
+
+// ── Elegante metadata ───────────────────────────────
+
+function drawEleganteMetadata(
+  ctx: CanvasRenderingContext2D,
+  params: DrawParams,
+  W: number,
+  H: number,
+): void {
+  const s = STYLES.elegante
+
+  ctx.save()
+  ctx.textAlign = "center"
+  ctx.textBaseline = "middle"
+  ctx.font = `400 ${Math.round(W * 0.022)}px ${s.fontFamily}`
+  ctx.fillStyle = s.textMuted
+
+  const spacing = H * 0.035
+  const baseY = H * 0.58
+
+  ctx.fillText(params.dateString, W / 2, baseY)
+  ctx.fillText(
+    `${params.totalComments.toLocaleString("es-AR")} comentarios analizados`,
+    W / 2,
+    baseY + spacing,
+  )
+
+  // Gold verification ID
+  ctx.font = `500 ${Math.round(W * 0.020)}px ${s.fontFamily}`
+  ctx.fillStyle = "rgba(212,175,55,0.5)"
+  ctx.fillText(params.verificationId, W / 2, baseY + spacing * 2)
+
+  ctx.restore()
+}
+
+// ── Corporativo data card ───────────────────────────
 
 function drawCorporativoDataCard(
   ctx: CanvasRenderingContext2D,
@@ -126,26 +216,42 @@ function drawCorporativoDataCard(
   W: number,
   H: number,
 ): void {
-  const margin = W * 0.08
+  const margin = W * 0.07
   const cardW = W - margin * 2
-  const cardH = H * 0.13
-  const cardY = H * 0.56
+  const cardH = H * 0.14
+  const cardY = H * 0.54
+  const radius = 14
 
-  // Card bg
+  // Card shadow
   ctx.save()
+  ctx.shadowColor = "rgba(0,0,0,0.06)"
+  ctx.shadowBlur = 20
+  ctx.shadowOffsetY = 4
   ctx.fillStyle = "#FFFFFF"
   ctx.beginPath()
-  ctx.roundRect(margin, cardY, cardW, cardH, 12)
+  ctx.roundRect(margin, cardY, cardW, cardH, radius)
   ctx.fill()
-  ctx.strokeStyle = "#E0E0E0"
+  ctx.restore()
+
+  // Card border
+  ctx.save()
+  ctx.beginPath()
+  ctx.roundRect(margin, cardY, cardW, cardH, radius)
+  ctx.strokeStyle = "#E8E8E8"
   ctx.lineWidth = 1
   ctx.stroke()
   ctx.restore()
 
   // 3 stat columns
   const stats = [
-    { value: params.totalComments.toLocaleString("es-AR"), label: "Comentarios" },
-    { value: params.filteredCount.toLocaleString("es-AR"), label: "Validos" },
+    {
+      value: params.totalComments.toLocaleString("es-AR"),
+      label: "Comentarios",
+    },
+    {
+      value: params.filteredCount.toLocaleString("es-AR"),
+      label: "Validos",
+    },
     { value: params.verificationId, label: "Verificacion" },
   ]
   const colW = cardW / 3
@@ -155,12 +261,23 @@ function drawCorporativoDataCard(
 
     // Divider between columns
     if (i > 0) {
+      ctx.save()
+      const divGrad = ctx.createLinearGradient(
+        0,
+        cardY + cardH * 0.2,
+        0,
+        cardY + cardH * 0.8,
+      )
+      divGrad.addColorStop(0, "transparent")
+      divGrad.addColorStop(0.5, "#E0E0E0")
+      divGrad.addColorStop(1, "transparent")
       ctx.beginPath()
       ctx.moveTo(margin + colW * i, cardY + cardH * 0.2)
       ctx.lineTo(margin + colW * i, cardY + cardH * 0.8)
-      ctx.strokeStyle = "#E0E0E0"
+      ctx.strokeStyle = divGrad
       ctx.lineWidth = 1
       ctx.stroke()
+      ctx.restore()
     }
 
     ctx.save()
@@ -168,12 +285,12 @@ function drawCorporativoDataCard(
     ctx.textBaseline = "middle"
 
     // Value
-    ctx.font = `700 ${Math.round(W * 0.028)}px system-ui, sans-serif`
+    ctx.font = `700 ${Math.round(W * 0.026)}px system-ui, -apple-system, sans-serif`
     ctx.fillStyle = "#1a1a1a"
     ctx.fillText(stat.value, cx, cardY + cardH * 0.40)
 
     // Label
-    ctx.font = `400 ${Math.round(W * 0.018)}px system-ui, sans-serif`
+    ctx.font = `400 ${Math.round(W * 0.016)}px system-ui, -apple-system, sans-serif`
     ctx.fillStyle = "#888888"
     ctx.fillText(stat.label, cx, cardY + cardH * 0.65)
 
@@ -184,7 +301,7 @@ function drawCorporativoDataCard(
   ctx.save()
   ctx.textAlign = "center"
   ctx.textBaseline = "middle"
-  ctx.font = `400 ${Math.round(W * 0.020)}px system-ui, sans-serif`
+  ctx.font = `400 ${Math.round(W * 0.019)}px system-ui, -apple-system, sans-serif`
   ctx.fillStyle = "#AAAAAA"
   ctx.fillText(params.dateString, W / 2, cardY + cardH + H * 0.025)
   ctx.restore()

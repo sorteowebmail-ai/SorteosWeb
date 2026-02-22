@@ -4,14 +4,18 @@ import {
   truncateText,
   drawLogo,
   drawWatermark,
+  drawGanadorBadge,
+  drawConfetti,
+  drawAccentGlow,
   heroFontSize,
+  hexToRgba,
 } from "./helpers"
 
 const TOTAL_DURATION = 7.0
 const FPS = 30
-const FADE_DURATION = 0.3
+const FADE_DURATION = 0.35
 
-// ── Scene 1: "RESULTADOS DEL SORTEO" ─────────────
+// ── Scene 1: Logo + "RESULTADOS DEL SORTEO" ────────
 
 function drawScene1(
   ctx: CanvasRenderingContext2D,
@@ -25,28 +29,44 @@ function drawScene1(
 
   const alpha = Math.min(progress * 2.5, 1)
 
-  // Logo centered
+  // Logo centered with scale animation
   if (params.logoImage) {
-    const size = Math.round(W * 0.12)
+    const size = Math.round(W * 0.14)
+    const scale = 0.8 + 0.2 * Math.min(progress * 3, 1)
+    ctx.save()
     ctx.globalAlpha = alpha
-    drawLogo(ctx, params.logoImage, W / 2 - size / 2, H * 0.30, size, 12)
-    ctx.globalAlpha = 1
+    ctx.translate(W / 2, H * 0.35)
+    ctx.scale(scale, scale)
+    drawLogo(
+      ctx,
+      params.logoImage,
+      -size / 2,
+      -size / 2,
+      size,
+      14,
+      style === "elegante" ? "rgba(212,175,55,0.3)" : undefined,
+    )
+    ctx.restore()
   }
 
-  // Title
+  // Title text
   ctx.save()
   ctx.globalAlpha = alpha
   ctx.textAlign = "center"
   ctx.textBaseline = "middle"
-  ctx.font = `300 ${Math.round(W * 0.038)}px ${s.fontFamily}`
+  ctx.font = `300 ${Math.round(W * 0.035)}px ${s.fontFamily}`
   ctx.fillStyle = s.textSecondary
-  ctx.letterSpacing = "3px"
-  ctx.fillText("RESULTADOS DEL SORTEO", W / 2, params.logoImage ? H * 0.50 : H * 0.48)
+  ctx.letterSpacing = "4px"
+  ctx.fillText(
+    "RESULTADOS DEL SORTEO",
+    W / 2,
+    params.logoImage ? H * 0.52 : H * 0.48,
+  )
   ctx.letterSpacing = "0px"
   ctx.restore()
 }
 
-// ── Scene 2: Giveaway name ────────────────────────
+// ── Scene 2: Giveaway name ──────────────────────────
 
 function drawScene2(
   ctx: CanvasRenderingContext2D,
@@ -59,22 +79,40 @@ function drawScene2(
   s.bgDraw(ctx, W, H, params.accentColor)
 
   const alpha = Math.min(progress * 3, 1)
+  const slideY = (1 - Math.min(progress * 2, 1)) * H * 0.02
 
   ctx.save()
   ctx.globalAlpha = alpha
   ctx.textAlign = "center"
   ctx.textBaseline = "middle"
-  ctx.font = `700 ${Math.round(W * 0.060)}px ${s.fontFamily}`
+  ctx.font = `700 ${Math.round(W * 0.055)}px ${s.fontFamily}`
   ctx.fillStyle = s.textPrimary
   ctx.fillText(
     truncateText(ctx, params.giveawayName.toUpperCase(), W * 0.85),
     W / 2,
-    H * 0.48,
+    H * 0.48 + slideY,
   )
   ctx.restore()
+
+  // Subtitle with participant count
+  const subtitleAlpha = Math.max(0, Math.min((progress - 0.4) * 3, 1))
+  if (subtitleAlpha > 0) {
+    ctx.save()
+    ctx.globalAlpha = subtitleAlpha
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+    ctx.font = `400 ${Math.round(W * 0.024)}px ${s.fontFamily}`
+    ctx.fillStyle = s.textMuted
+    ctx.fillText(
+      `${params.totalComments.toLocaleString("es-AR")} participantes`,
+      W / 2,
+      H * 0.56,
+    )
+    ctx.restore()
+  }
 }
 
-// ── Scene 3: Winner reveal ────────────────────────
+// ── Scene 3: Winner reveal with confetti burst ──────
 
 function drawScene3(
   ctx: CanvasRenderingContext2D,
@@ -86,17 +124,42 @@ function drawScene3(
   const s = STYLES[style]
   s.bgDraw(ctx, W, H, params.accentColor)
 
-  // "GANADOR" label
+  // Confetti burst — fades in with progress
+  const confettiAlpha = Math.min(progress * 2, 1)
+  if (confettiAlpha > 0) {
+    ctx.save()
+    ctx.globalAlpha = confettiAlpha
+    drawConfetti(ctx, W, H, s.confettiColors, 80, 42, {
+      yMin: 0,
+      yMax: H * 0.3,
+      sizeRange: [5, 16],
+      alphaRange: [0.10, 0.35],
+    })
+    drawConfetti(ctx, W, H, s.confettiColors, 50, 99, {
+      yMin: H * 0.65,
+      yMax: H,
+      sizeRange: [4, 12],
+      alphaRange: [0.08, 0.25],
+    })
+    ctx.restore()
+  }
+
+  // Accent glow behind name
+  const glowAlpha = Math.min(progress * 2, 1)
+  drawAccentGlow(
+    ctx,
+    W / 2,
+    H * 0.46,
+    W * 0.5,
+    style === "elegante" ? "#D4AF37" : params.accentColor,
+    0.12 * glowAlpha,
+  )
+
+  // "GANADOR" badge fade-in
   const labelAlpha = Math.min(progress * 4, 1)
   ctx.save()
   ctx.globalAlpha = labelAlpha
-  ctx.textAlign = "center"
-  ctx.textBaseline = "middle"
-  ctx.font = `300 ${Math.round(W * 0.030)}px ${s.fontFamily}`
-  ctx.fillStyle = style === "elegante" ? s.goldAccent! : s.labelColor
-  ctx.letterSpacing = "8px"
-  ctx.fillText("GANADOR", W / 2, H * 0.36)
-  ctx.letterSpacing = "0px"
+  drawGanadorBadge(ctx, W / 2, H * 0.34, W, style, params.accentColor)
   ctx.restore()
 
   // Username with scale reveal
@@ -108,22 +171,28 @@ function drawScene3(
   const fontSize = heroFontSize(username, W)
 
   ctx.save()
-  ctx.translate(W / 2, H * 0.48)
+  ctx.translate(W / 2, H * 0.46)
   ctx.scale(scale, scale)
   ctx.globalAlpha = nameAlpha
   ctx.textAlign = "center"
   ctx.textBaseline = "middle"
-  ctx.font = `700 ${fontSize}px system-ui, sans-serif`
-  ctx.fillStyle = s.textPrimary
+  ctx.font = `800 ${fontSize}px system-ui, -apple-system, sans-serif`
+
   if (style === "elegante") {
-    ctx.shadowColor = "rgba(212,175,55,0.3)"
-    ctx.shadowBlur = 30
+    ctx.shadowColor = "rgba(212,175,55,0.35)"
+    ctx.shadowBlur = 40
+    ctx.fillStyle = "#FFFFFF"
+  } else {
+    ctx.shadowColor = hexToRgba(params.accentColor, 0.15)
+    ctx.shadowBlur = 25
+    ctx.fillStyle = s.textPrimary
   }
+
   ctx.fillText(truncateText(ctx, username, W * 0.85), 0, 0)
   ctx.restore()
 }
 
-// ── Scene 4: Details ──────────────────────────────
+// ── Scene 4: Details + final frame ──────────────────
 
 function drawScene4(
   ctx: CanvasRenderingContext2D,
@@ -135,40 +204,86 @@ function drawScene4(
   const s = STYLES[style]
   s.bgDraw(ctx, W, H, params.accentColor)
 
+  // Persistent confetti (subtle)
+  ctx.save()
+  ctx.globalAlpha = 0.8
+  drawConfetti(ctx, W, H, s.confettiColors, 50, 42, {
+    yMin: 0,
+    yMax: H * 0.25,
+    sizeRange: [4, 12],
+    alphaRange: [0.06, 0.20],
+  })
+  drawConfetti(ctx, W, H, s.confettiColors, 35, 99, {
+    yMin: H * 0.70,
+    yMax: H,
+    sizeRange: [3, 10],
+    alphaRange: [0.05, 0.16],
+  })
+  ctx.restore()
+
+  // Accent glow
+  drawAccentGlow(
+    ctx,
+    W / 2,
+    H * 0.38,
+    W * 0.45,
+    style === "elegante" ? "#D4AF37" : params.accentColor,
+    0.06,
+  )
+
+  // "GANADOR" badge stays but muted
+  ctx.save()
+  ctx.globalAlpha = 0.7
+  drawGanadorBadge(ctx, W / 2, H * 0.28, W, style, params.accentColor)
+  ctx.restore()
+
   // Winner stays visible (smaller, moved up)
   const username = `@${params.winner.username}`
-  const fontSize = heroFontSize(username, W, 0.85)
+  const fontSize = heroFontSize(username, W, 0.82)
   ctx.save()
   ctx.textAlign = "center"
   ctx.textBaseline = "middle"
-  ctx.font = `700 ${fontSize}px system-ui, sans-serif`
-  ctx.fillStyle = s.textPrimary
+  ctx.font = `800 ${fontSize}px system-ui, -apple-system, sans-serif`
+
   if (style === "elegante") {
-    ctx.shadowColor = "rgba(212,175,55,0.3)"
-    ctx.shadowBlur = 20
+    ctx.shadowColor = "rgba(212,175,55,0.25)"
+    ctx.shadowBlur = 25
+    ctx.fillStyle = "#FFFFFF"
+  } else {
+    ctx.shadowColor = hexToRgba(params.accentColor, 0.10)
+    ctx.shadowBlur = 15
+    ctx.fillStyle = s.textPrimary
   }
+
   ctx.fillText(truncateText(ctx, username, W * 0.85), W / 2, H * 0.38)
   ctx.restore()
 
-  // Details fade in with stagger
+  // Details fade in with stagger + slide
   const details = [
     params.dateString,
     `${params.totalComments.toLocaleString("es-AR")} comentarios analizados`,
     params.verificationId,
   ]
-  const baseY = H * 0.50
-  const lineH = H * 0.045
+  const baseY = H * 0.51
+  const lineH = H * 0.042
 
   details.forEach((text, i) => {
     const staggerDelay = i * 0.15
     const lineAlpha = Math.max(0, Math.min((progress - staggerDelay) * 4, 1))
+    const slideY = (1 - lineAlpha) * H * 0.01
+
     ctx.save()
     ctx.globalAlpha = lineAlpha
     ctx.textAlign = "center"
     ctx.textBaseline = "middle"
-    ctx.font = `400 ${Math.round(W * 0.026)}px system-ui, sans-serif`
-    ctx.fillStyle = s.textMuted
-    ctx.fillText(text, W / 2, baseY + i * lineH)
+    ctx.font = `400 ${Math.round(W * 0.024)}px system-ui, -apple-system, sans-serif`
+    ctx.fillStyle =
+      i === 2
+        ? style === "elegante"
+          ? "rgba(212,175,55,0.5)"
+          : hexToRgba(params.accentColor, 0.5)
+        : s.textMuted
+    ctx.fillText(text, W / 2, baseY + i * lineH + slideY)
     ctx.restore()
   })
 
@@ -178,7 +293,14 @@ function drawScene4(
     const logoSize = Math.round(W * 0.07)
     ctx.save()
     ctx.globalAlpha = logoAlpha
-    drawLogo(ctx, params.logoImage, W / 2 - logoSize / 2, H * 0.72, logoSize, 8)
+    drawLogo(
+      ctx,
+      params.logoImage,
+      W / 2 - logoSize / 2,
+      H * 0.70,
+      logoSize,
+      8,
+    )
     ctx.restore()
   }
 
@@ -192,7 +314,7 @@ function drawScene4(
   }
 }
 
-// ── Scene timeline ────────────────────────────────
+// ── Scene timeline ──────────────────────────────────
 
 const SCENES = [
   { start: 0.0, end: 1.5, draw: drawScene1 },
@@ -201,7 +323,7 @@ const SCENES = [
   { start: 5.0, end: 7.0, draw: drawScene4 },
 ]
 
-// ── Public: draw a single video frame ─────────────
+// ── Public: draw a single video frame ───────────────
 
 export function drawVideoFrame(
   ctx: CanvasRenderingContext2D,
@@ -209,7 +331,9 @@ export function drawVideoFrame(
   style: KitStyle,
   currentTime: number,
 ): void {
-  const idx = SCENES.findIndex((sc) => currentTime >= sc.start && currentTime < sc.end)
+  const idx = SCENES.findIndex(
+    (sc) => currentTime >= sc.start && currentTime < sc.end,
+  )
 
   if (idx === -1) {
     // After last scene: hold final frame
@@ -242,7 +366,7 @@ export function drawVideoFrame(
   }
 }
 
-// ── Public: record video as WebM Blob ─────────────
+// ── Public: record video as WebM Blob ───────────────
 
 export async function recordVideo(
   canvas: HTMLCanvasElement,
@@ -294,10 +418,13 @@ export async function recordVideo(
   })
 }
 
-// ── Public: check if video recording is supported ─
+// ── Public: check if video recording is supported ───
 
 export function isVideoSupported(): boolean {
   if (typeof document === "undefined") return false
   const testCanvas = document.createElement("canvas")
-  return typeof testCanvas.captureStream === "function" && typeof MediaRecorder !== "undefined"
+  return (
+    typeof testCanvas.captureStream === "function" &&
+    typeof MediaRecorder !== "undefined"
+  )
 }

@@ -31,4 +31,5 @@ export interface StyleConfig {
   isLight: boolean
   fontFamily: string
   goldAccent?: string
+  confettiColors: string[]
 }

@@ -106,12 +106,11 @@ export async function POST(request: NextRequest) {
         failure: `${siteUrl}/sorteo/resultado?status=failed`,
         pending: `${siteUrl}/sorteo/resultado?status=pending`,
       },
+      auto_return: "approved",
       external_reference: quoteId,
     }
 
     if (!isLocalhost) {
-      preferenceBody.auto_return = "approved"
-
       // Webhook URL for production
       const webhookUrl = process.env.MERCADOPAGO_WEBHOOK_URL
       if (webhookUrl) {

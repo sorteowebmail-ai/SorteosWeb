@@ -28,6 +28,26 @@ export interface ScrapedComment {
 }
 
 // ============================================================
+// Error classes
+// ============================================================
+
+export class InstagramPermanentError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "InstagramPermanentError"
+  }
+}
+
+export class InstagramTransientError extends Error {
+  public readonly statusCode?: number
+  constructor(message: string, statusCode?: number) {
+    super(message)
+    this.name = "InstagramTransientError"
+    this.statusCode = statusCode
+  }
+}
+
+// ============================================================
 // Helpers
 // ============================================================
 
@@ -54,7 +74,7 @@ export function shortcodeToMediaId(shortcode: string): string {
   return id.toString()
 }
 
-function getCookies(): { cookieStr: string; csrfToken: string } {
+export function getCookies(): { cookieStr: string; csrfToken: string } {
   const fullCookies = process.env.INSTAGRAM_COOKIES
   if (fullCookies) {
     const csrfMatch = fullCookies.match(/csrftoken=([^;]+)/)
@@ -120,19 +140,28 @@ function buildPageHeaders(cookieStr: string): Record<string, string> {
   }
 }
 
-function checkAuthError(data: { message?: string; status?: string }): void {
+export function checkAuthError(data: { message?: string; status?: string }): void {
+  const msg = data.message || ""
+
+  // Permanent — no retry will help
   if (
-    data.message === "login_required" ||
-    data.message === "checkpoint_required" ||
-    data.message === "Please wait a few minutes before you try again."
+    msg === "login_required" ||
+    msg === "checkpoint_required" ||
+    msg === "feedback_required" ||
+    msg === "consent_required"
   ) {
-    throw new Error(
-      "Sesion de Instagram expirada o bloqueada.\n" +
+    throw new InstagramPermanentError(
+      "Sesi\u00F3n de Instagram expirada o bloqueada.\n" +
         "Actualiza INSTAGRAM_COOKIES en .env.local:\n" +
-        "1. Abri Instagram.com en Chrome (logueado)\n" +
+        "1. Abr\u00ED Instagram.com en Chrome (logueado)\n" +
         "2. F12 > Application > Cookies > instagram.com\n" +
-        "3. Copia el valor de 'sessionid' y actualiza .env.local"
+        "3. Copi\u00E1 el valor de 'sessionid' y actualiza .env.local"
     )
+  }
+
+  // Transient — worth retrying with backoff
+  if (msg === "Please wait a few minutes before you try again.") {
+    throw new InstagramTransientError("Instagram pide esperar. Reintentando...", 429)
   }
 }
 
@@ -498,8 +527,153 @@ export async function scrapePostInfo(shortcode: string): Promise<PostInfo> {
 }
 
 /**
- * Scrape comments from a post (paginated)
+ * Scrape comments from a post (paginated).
+ *
+ * Speed strategy:
+ *   1. Dual-host: alternate between www.instagram.com and i.instagram.com
+ *      — they have SEPARATE rate-limit buckets, effectively doubling capacity
+ *   2. count=100: request 100 comments/page instead of the default ~20
+ *   3. can_support_threading=false: flat chronological list, more per page
+ *   4. Cross-host fallback: if one host returns 429, try the other immediately
+ *   5. Exponential backoff only when BOTH hosts fail
  */
+const HOSTS = ["www.instagram.com", "i.instagram.com"] as const
+const RETRY_MAX = 3
+const RETRY_BASE_MS = 2000 // 2s → 4s → 8s
+
+// Track which host to use next (alternates per call for even distribution)
+let hostIndex = 0
+
+function buildCommentsUrl(host: string, mediaId: string, cursor?: string): string {
+  let url = `https://${host}/api/v1/media/${mediaId}/comments/?can_support_threading=false&permalink_enabled=false&count=100`
+  if (cursor) {
+    url += `&min_id=${encodeURIComponent(cursor)}`
+  }
+  return url
+}
+
+export function parseCommentsResponse(data: {
+  comments?: { pk: string; user: { username: string }; text: string; created_at: number }[]
+  has_more_comments?: boolean
+  has_more_headload_comments?: boolean
+  next_min_id?: string
+  comment_count?: number
+}): {
+  comments: ScrapedComment[]
+  hasMore: boolean
+  cursor?: string
+  total?: number
+} {
+  const comments: ScrapedComment[] = (data.comments || []).map(
+    (c) => ({
+      id: String(c.pk),
+      username: c.user?.username || "unknown",
+      text: c.text || "",
+      timestamp: new Date((c.created_at || 0) * 1000).toISOString(),
+    })
+  )
+  return {
+    comments,
+    hasMore: data.has_more_comments || data.has_more_headload_comments || false,
+    cursor: data.next_min_id || undefined,
+    total: data.comment_count || undefined,
+  }
+}
+
+async function fetchCommentsFromHost(
+  host: string,
+  mediaId: string,
+  cursor: string | undefined,
+  headers: Record<string, string>,
+): Promise<
+  | { ok: true; data: ReturnType<typeof parseCommentsResponse> }
+  | { ok: false; error: Error; retryable: boolean }
+> {
+  try {
+    const url = buildCommentsUrl(host, mediaId, cursor)
+    const res = await fetch(url, { headers })
+
+    if (res.status === 302) {
+      return {
+        ok: false,
+        error: new InstagramPermanentError(
+          "Sesión de Instagram no válida. Actualiza INSTAGRAM_COOKIES en .env.local"
+        ),
+        retryable: false,
+      }
+    }
+
+    if (res.status === 429 || res.status >= 500) {
+      return {
+        ok: false,
+        error: new InstagramTransientError(`Instagram respondió con status ${res.status}`, res.status),
+        retryable: true,
+      }
+    }
+
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: new InstagramPermanentError(`Instagram respondió con status ${res.status}`),
+        retryable: false,
+      }
+    }
+
+    const text = await res.text()
+
+    if (!text.startsWith("{")) {
+      if (text.includes("login") || text.includes("LoginAndSignupPage") || text.includes("checkpoint")) {
+        return {
+          ok: false,
+          error: new InstagramPermanentError("Instagram redirigió a login. Sesión expirada."),
+          retryable: false,
+        }
+      }
+      return {
+        ok: false,
+        error: new InstagramTransientError("Respuesta inesperada de Instagram (HTML en vez de JSON)."),
+        retryable: true,
+      }
+    }
+
+    const data = JSON.parse(text)
+    checkAuthError(data)
+
+    if (data.status === "fail") {
+      const msg = data.message || "Error desconocido"
+      // These are auth/permanent errors — no retry
+      const permanentMessages = ["login_required", "checkpoint_required", "feedback_required", "consent_required", "not_authorized"]
+      if (permanentMessages.includes(msg)) {
+        return {
+          ok: false,
+          error: new InstagramPermanentError(`Instagram error: ${msg}`),
+          retryable: false,
+        }
+      }
+      // Everything else (generic errors, "try again", etc.) is transient — retry
+      return {
+        ok: false,
+        error: new InstagramTransientError(`Instagram error: ${msg}`),
+        retryable: true,
+      }
+    }
+
+    return { ok: true, data: parseCommentsResponse(data) }
+  } catch (error) {
+    if (error instanceof InstagramPermanentError) {
+      return { ok: false, error, retryable: false }
+    }
+    if (error instanceof InstagramTransientError) {
+      return { ok: false, error, retryable: true }
+    }
+    return {
+      ok: false,
+      error: error instanceof Error ? error : new Error(String(error)),
+      retryable: true,
+    }
+  }
+}
+
 export async function scrapeComments(
   shortcode: string,
   cursor?: string
@@ -507,65 +681,42 @@ export async function scrapeComments(
   comments: ScrapedComment[]
   hasMore: boolean
   cursor?: string
+  total?: number
 }> {
   const { cookieStr, csrfToken } = getCookies()
   const mediaId = shortcodeToMediaId(shortcode)
   const headers = buildHeaders(cookieStr, csrfToken)
 
-  let url = `https://www.instagram.com/api/v1/media/${mediaId}/comments/?can_support_threading=true&permalink_enabled=false`
-  if (cursor) {
-    url += `&min_id=${cursor}`
-  }
+  let lastError: Error | null = null
 
-  const res = await fetch(url, { headers })
-
-  if (!res.ok) {
-    if (res.status === 302) {
-      throw new Error(
-        "Sesion de Instagram no valida. Actualiza INSTAGRAM_COOKIES en .env.local"
-      )
+  for (let attempt = 0; attempt <= RETRY_MAX; attempt++) {
+    // Backoff delay on retries (only after both hosts failed)
+    if (attempt > 0) {
+      const delay = Math.min(RETRY_BASE_MS * Math.pow(2, attempt - 1), 15000)
+      console.log(`scrapeComments retry ${attempt}/${RETRY_MAX} after ${delay}ms`)
+      await new Promise((r) => setTimeout(r, delay))
     }
-    throw new Error(`Instagram respondio con status ${res.status}`)
+
+    // Try primary host, then fallback host if rate-limited
+    const primary = HOSTS[hostIndex % HOSTS.length]
+    const fallback = HOSTS[(hostIndex + 1) % HOSTS.length]
+    hostIndex++ // alternate for next call
+
+    const result = await fetchCommentsFromHost(primary, mediaId, cursor, headers)
+    if (result.ok) return result.data
+    if (!result.retryable) throw result.error
+
+    // Primary failed with retryable error → try fallback host immediately
+    console.log(`${primary} failed (${result.error.message}), trying ${fallback}`)
+    const fallbackResult = await fetchCommentsFromHost(fallback, mediaId, cursor, headers)
+    if (fallbackResult.ok) return fallbackResult.data
+    if (!fallbackResult.retryable) throw fallbackResult.error
+
+    // Both hosts failed → will retry with backoff
+    lastError = fallbackResult.error
   }
 
-  const text = await res.text()
-  if (!text.startsWith("{")) {
-    throw new Error(
-      "Respuesta inesperada de Instagram. Tu sesion puede haber expirado."
-    )
-  }
-
-  const data = JSON.parse(text)
-  checkAuthError(data)
-
-  if (data.status === "fail") {
-    throw new Error(
-      `Instagram error: ${data.message || "Error desconocido"}`
-    )
-  }
-
-  const comments: ScrapedComment[] = (data.comments || []).map(
-    (c: {
-      pk: string
-      user: { username: string }
-      text: string
-      created_at: number
-    }) => ({
-      id: String(c.pk),
-      username: c.user?.username || "unknown",
-      text: c.text || "",
-      timestamp: new Date((c.created_at || 0) * 1000).toISOString(),
-    })
-  )
-
-  return {
-    comments,
-    hasMore:
-      data.has_more_comments ||
-      data.has_more_headload_comments ||
-      false,
-    cursor: data.next_min_id || undefined,
-  }
+  throw lastError || new InstagramTransientError("Error tras reintentos agotados")
 }
 
 /**

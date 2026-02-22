@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -30,6 +30,7 @@ import {
   Clipboard,
   Shield,
   CheckCircle2,
+  RotateCcw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -62,7 +63,6 @@ const ACCENT_PRESETS = ["#820AD1", "#4ECDC4", "#B76EF0", "#C792EA", "#45B7D1", "
 export function GiveawayWizard() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
-  const [isLoading, setIsLoading] = useState(false)
   const [postUrl, setPostUrl] = useState("")
   const [postInfo, setPostInfo] = useState<PostInfo | null>(null)
   const [verifying, setVerifying] = useState(false)
@@ -83,8 +83,18 @@ export function GiveawayWizard() {
   const [keywordInput, setKeywordInput] = useState("")
   const [loadingProgress, setLoadingProgress] = useState<{
     fetched: number
-    done: boolean
+    total: number
+    pages: number
+    uniqueParticipants: number
+    status: "loading" | "complete" | "incomplete" | "failed"
+    errorMessage?: string
+    source?: "browser" | "http" | "cache"
   } | null>(null)
+  const [jobId, setJobId] = useState<string | null>(null)
+  // Ref to hold comments from COMPLETE status — avoids storing huge array in state
+  const completedCommentsRef = useRef<
+    { id: string; username: string; text: string; timestamp: string }[] | null
+  >(null)
 
   // Prefill URL from hero section
   useEffect(() => {
@@ -94,6 +104,9 @@ export function GiveawayWizard() {
       sessionStorage.removeItem("prefillUrl")
     }
   }, [])
+
+  const proxyImage = (url: string) =>
+    url ? `/api/image-proxy?url=${encodeURIComponent(url)}` : ""
 
   const isValidInstagramUrl = (url: string) => {
     return (
@@ -135,6 +148,19 @@ export function GiveawayWizard() {
 
       setPostInfo(data.post)
       setSettings((prev) => ({ ...prev, postUrl }))
+
+      // Server auto-started a scrape job — begin polling
+      if (data.jobId) {
+        setJobId(data.jobId)
+        completedCommentsRef.current = null
+        setLoadingProgress({
+          fetched: 0,
+          total: data.post.commentCount || 0,
+          pages: 0,
+          uniqueParticipants: 0,
+          status: "loading",
+        })
+      }
     } catch {
       setVerifyError("Error de conexión. Intenta de nuevo.")
     } finally {
@@ -154,74 +180,123 @@ export function GiveawayWizard() {
     }
   }
 
-  const handleStartGiveaway = async () => {
-    if (!postInfo) return
-    setIsLoading(true)
+  // Map server job status to UI status
+  const mapJobStatus = useCallback(
+    (s: string): "loading" | "complete" | "incomplete" | "failed" => {
+      switch (s) {
+        case "RUNNING": return "loading"
+        case "COMPLETE": return "complete"
+        case "PARTIAL": return "incomplete"
+        case "BLOCKED":
+        case "ERROR":
+        default: return "failed"
+      }
+    },
+    [],
+  )
 
-    const allComments: {
-      id: string
-      username: string
-      comment: string
-      timestamp: string
-    }[] = []
-    let cursor: string | undefined
-    let hasMore = true
-    let page = 0
+  // Poll job status
+  useEffect(() => {
+    if (!jobId) return
 
-    while (hasMore) {
+    const poll = async () => {
       try {
-        page++
-        setLoadingProgress({
-          fetched: allComments.length,
-          done: false,
-        })
-
-        const url = `/api/scrape/comments?shortcode=${postInfo.shortcode}${cursor ? `&cursor=${cursor}` : ""}`
-        const res = await fetch(url)
+        const res = await fetch(`/api/scrape/status?jobId=${jobId}`)
+        if (!res.ok) return
         const data = await res.json()
 
-        if (!res.ok) {
-          if (page === 1) {
-            setVerifyError(data.error || "Error al procesar comentarios")
-            setIsLoading(false)
-            return
-          }
-          break
-        }
+        const uiStatus = mapJobStatus(data.status)
 
-        for (const c of data.comments) {
-          allComments.push({
-            id: c.id,
-            username: c.username,
-            comment: c.text,
-            timestamp: c.timestamp,
-          })
-        }
+        setLoadingProgress({
+          fetched: data.fetched,
+          total: data.total,
+          pages: data.pages,
+          uniqueParticipants: data.uniqueParticipants || 0,
+          status: uiStatus,
+          source: data.source || undefined,
+          errorMessage: data.errorMessage || undefined,
+        })
 
-        hasMore = data.hasMore
-        cursor = data.cursor
-
-        if (hasMore) {
-          await new Promise((r) => setTimeout(r, 300))
+        // When job finishes, store comments and stop polling
+        if (data.status === "COMPLETE" && data.comments) {
+          completedCommentsRef.current = data.comments
         }
       } catch {
-        break
+        // Network error — keep polling, it'll recover
       }
     }
 
-    setLoadingProgress({
-      fetched: allComments.length,
-      done: true,
-    })
+    // Initial poll immediately
+    poll()
+    const interval = setInterval(poll, 1000)
+    return () => clearInterval(interval)
+  }, [jobId, mapJobStatus])
 
-    const isFree = isFreeGiveaway(settings, allComments.length)
+  // Navigate to results when scraping is done and user is on step 3
+  const handleExecuteGiveaway = useCallback(() => {
+    if (!postInfo || !completedCommentsRef.current) return
+
+    const comments = completedCommentsRef.current.map((c) => ({
+      id: c.id,
+      username: c.username,
+      comment: c.text,
+      timestamp: c.timestamp,
+    }))
+
+    const isFree = isFreeGiveaway(settings, comments.length)
     sessionStorage.setItem("giveawaySettings", JSON.stringify(settings))
-    sessionStorage.setItem("giveawayParticipants", JSON.stringify(allComments))
+    sessionStorage.setItem("giveawayParticipants", JSON.stringify(comments))
     sessionStorage.setItem("giveawayMedia", JSON.stringify(postInfo))
     sessionStorage.setItem("giveawayIsFree", JSON.stringify(isFree))
 
     router.push("/sorteo/resultado")
-  }
+  }, [postInfo, settings, router])
+
+  // Continue with partial data (fetch from cache)
+  const handleContinuePartial = useCallback(async () => {
+    if (!postInfo) return
+    try {
+      const res = await fetch(`/api/scrape/comments?shortcode=${postInfo.shortcode}`)
+      if (!res.ok) return
+      const data = await res.json()
+      if (data.comments) {
+        completedCommentsRef.current = data.comments
+        handleExecuteGiveaway()
+      }
+    } catch {
+      // Fallback to whatever we have
+    }
+  }, [postInfo, handleExecuteGiveaway])
+
+  // Restart scraping (e.g. after error)
+  const handleRetry = useCallback(async () => {
+    if (!postInfo) return
+    setLoadingProgress({
+      fetched: 0,
+      total: postInfo.commentCount || 0,
+      pages: 0,
+      uniqueParticipants: 0,
+      status: "loading",
+    })
+    completedCommentsRef.current = null
+    try {
+      const res = await fetch("/api/scrape/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shortcode: postInfo.shortcode,
+          mediaId: postInfo.mediaId,
+          estimatedTotal: postInfo.commentCount,
+        }),
+      })
+      const data = await res.json()
+      if (data.jobId) setJobId(data.jobId)
+    } catch {
+      setLoadingProgress((prev) =>
+        prev ? { ...prev, status: "failed", errorMessage: "Error de conexión al reiniciar." } : null,
+      )
+    }
+  }, [postInfo])
 
   const canProceed = () => {
     if (currentStep === 1) return postInfo !== null
@@ -432,34 +507,83 @@ export function GiveawayWizard() {
                             <Check className="w-4 h-4" />
                             Publicación verificada
                           </div>
-                          <div className="flex gap-4">
+                          <div className="flex gap-5">
                             {postInfo.displayUrl && (
                               <img
-                                src={postInfo.displayUrl}
+                                src={proxyImage(postInfo.displayUrl)}
                                 alt="Post preview"
-                                className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                                className="w-28 h-28 rounded-xl object-cover flex-shrink-0"
                               />
                             )}
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-foreground text-sm">
+                            <div className="flex-1 min-w-0 py-0.5">
+                              <p className="font-semibold text-foreground">
                                 @{postInfo.ownerUsername}
                               </p>
-                              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                {postInfo.caption?.slice(0, 120) || "Sin descripción"}
-                                {(postInfo.caption?.length || 0) > 120 ? "..." : ""}
+                              <p className="text-sm text-muted-foreground line-clamp-3 mt-1.5">
+                                {postInfo.caption?.slice(0, 180) || "Sin descripción"}
+                                {(postInfo.caption?.length || 0) > 180 ? "..." : ""}
                               </p>
-                              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                  <Heart className="w-3 h-3" />
+                              <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1.5">
+                                  <Heart className="w-3.5 h-3.5" />
                                   {postInfo.likeCount.toLocaleString()}
                                 </span>
-                                <span className="flex items-center gap-1">
-                                  <MessageSquare className="w-3 h-3" />
+                                <span className="flex items-center gap-1.5">
+                                  <MessageSquare className="w-3.5 h-3.5" />
                                   {postInfo.commentCount.toLocaleString()} comentarios
                                 </span>
                               </div>
                             </div>
                           </div>
+
+                          {/* Background scraping progress (step 1) */}
+                          {loadingProgress && (() => {
+                            // Accelerated progress: sqrt curve makes it feel faster at the start
+                            const realPct = loadingProgress.total > 0
+                              ? Math.min(loadingProgress.fetched / loadingProgress.total, 1)
+                              : 0
+                            const displayPct = Math.round(Math.sqrt(realPct) * 100)
+
+                            return (
+                              <div className="pt-2 border-t border-border/30">
+                                <div className="flex items-center gap-2">
+                                  {loadingProgress.status === "complete" ? (
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                                  ) : loadingProgress.status === "loading" ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary flex-shrink-0" />
+                                  ) : (
+                                    <AlertCircle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                                  )}
+                                  <p className="text-xs text-muted-foreground">
+                                    {loadingProgress.status === "complete"
+                                      ? `${loadingProgress.fetched.toLocaleString("es-AR")} comentarios listos · ${loadingProgress.uniqueParticipants.toLocaleString("es-AR")} participantes`
+                                      : loadingProgress.status === "loading"
+                                        ? loadingProgress.uniqueParticipants > 0
+                                          ? `${loadingProgress.uniqueParticipants.toLocaleString("es-AR")} participantes encontrados${displayPct > 0 ? ` · ${displayPct}%` : ""}`
+                                          : `Descargando comentarios...${displayPct > 0 ? ` ${displayPct}%` : ""}`
+                                        : `Descarga interrumpida (${loadingProgress.fetched.toLocaleString("es-AR")})`}
+                                  </p>
+                                </div>
+                                <div className="w-full h-1 bg-border/50 rounded-full overflow-hidden mt-1.5">
+                                  {loadingProgress.status === "complete" ? (
+                                    <div className="h-full bg-emerald-500 rounded-full w-full" />
+                                  ) : displayPct > 0 ? (
+                                    <motion.div
+                                      className="h-full bg-primary rounded-full"
+                                      animate={{ width: `${displayPct}%` }}
+                                      transition={{ duration: 0.3, ease: "easeOut" }}
+                                    />
+                                  ) : (
+                                    <motion.div
+                                      className="h-full bg-primary rounded-full w-1/3"
+                                      animate={{ x: ["-100%", "300%"] }}
+                                      transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })()}
                         </motion.div>
                       )}
                     </div>
@@ -896,7 +1020,7 @@ export function GiveawayWizard() {
                         <div className="p-4 rounded-lg bg-secondary/30 border border-border/50 flex items-center gap-4">
                           {postInfo.displayUrl && (
                             <img
-                              src={postInfo.displayUrl}
+                              src={proxyImage(postInfo.displayUrl)}
                               alt="Post"
                               className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                             />
@@ -984,52 +1108,122 @@ export function GiveawayWizard() {
                       </p>
                     </div>
 
-                    {/* Loading progress */}
-                    {isLoading && loadingProgress && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="max-w-lg mx-auto p-5 rounded-xl bg-secondary/30 border border-border/50"
-                      >
-                        <div className="flex items-center gap-3">
-                          {loadingProgress.done ? (
-                            <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                          ) : (
-                            <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground">
-                              {loadingProgress.done
-                                ? `${loadingProgress.fetched.toLocaleString("es-AR")} comentarios procesados`
-                                : "Procesando comentarios del post..."}
-                            </p>
-                            {!loadingProgress.done && loadingProgress.fetched > 0 && (
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {loadingProgress.fetched.toLocaleString("es-AR")} recopilados
+                    {/* Scraping progress */}
+                    {loadingProgress && (() => {
+                      // Accelerated progress: sqrt curve makes it feel faster at the start
+                      const realPct = loadingProgress.total > 0
+                        ? Math.min(loadingProgress.fetched / loadingProgress.total, 1)
+                        : 0
+                      const displayPct = Math.round(Math.sqrt(realPct) * 100)
+                      const sourceLabel = loadingProgress.source === "browser" ? "navegador" : loadingProgress.source === "cache" ? "cache" : loadingProgress.source === "http" ? "HTTP" : null
+
+                      return (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className={`max-w-lg mx-auto p-5 rounded-xl border ${
+                            loadingProgress.status === "complete"
+                              ? "bg-emerald-500/10 border-emerald-500/30"
+                              : loadingProgress.status === "incomplete"
+                                ? "bg-amber-500/10 border-amber-500/30"
+                                : loadingProgress.status === "failed"
+                                  ? "bg-red-500/10 border-red-500/30"
+                                  : "bg-secondary/30 border-border/50"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {loadingProgress.status === "complete" ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                            ) : loadingProgress.status === "failed" || loadingProgress.status === "incomplete" ? (
+                              <AlertCircle className={`w-4 h-4 flex-shrink-0 ${
+                                loadingProgress.status === "failed" ? "text-red-500" : "text-amber-500"
+                              }`} />
+                            ) : (
+                              <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-foreground">
+                                {loadingProgress.status === "complete"
+                                  ? `${loadingProgress.uniqueParticipants.toLocaleString("es-AR")} participantes · ${loadingProgress.fetched.toLocaleString("es-AR")} comentarios`
+                                  : loadingProgress.status === "failed"
+                                    ? "Error al descargar comentarios"
+                                    : loadingProgress.status === "incomplete"
+                                      ? `Descarga incompleta: ${loadingProgress.uniqueParticipants.toLocaleString("es-AR")} participantes (${loadingProgress.fetched.toLocaleString("es-AR")} comentarios)`
+                                      : loadingProgress.uniqueParticipants > 0
+                                        ? `${loadingProgress.uniqueParticipants.toLocaleString("es-AR")} participantes encontrados`
+                                        : "Descargando comentarios del post..."}
                               </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {loadingProgress.pages > 0 && `${loadingProgress.pages} pág.`}
+                                {loadingProgress.status === "complete" && loadingProgress.total > 0 && loadingProgress.fetched < loadingProgress.total && (
+                                  ` · IG reportó ~${loadingProgress.total.toLocaleString("es-AR")} (incluye eliminados/filtrados)`
+                                )}
+                                {loadingProgress.status === "loading" && displayPct > 0 && ` · ${displayPct}%`}
+                                {sourceLabel && ` · via ${sourceLabel}`}
+                              </p>
+                              {loadingProgress.errorMessage && loadingProgress.status !== "loading" && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {loadingProgress.errorMessage}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Progress bar */}
+                          <div className="w-full h-1.5 bg-border/50 rounded-full overflow-hidden mt-3">
+                            {loadingProgress.status === "complete" ? (
+                              <motion.div
+                                className="h-full bg-emerald-500 rounded-full"
+                                initial={{ width: "0%" }}
+                                animate={{ width: "100%" }}
+                                transition={{ duration: 0.4, ease: "easeOut" }}
+                              />
+                            ) : loadingProgress.status === "failed" ? (
+                              <motion.div
+                                className="h-full bg-red-500 rounded-full"
+                                initial={{ width: "0%" }}
+                                animate={{ width: displayPct > 0 ? `${displayPct}%` : "100%" }}
+                                transition={{ duration: 0.3 }}
+                              />
+                            ) : loadingProgress.status === "incomplete" ? (
+                              <motion.div
+                                className="h-full bg-amber-500 rounded-full"
+                                initial={{ width: "0%" }}
+                                animate={{ width: displayPct > 0 ? `${displayPct}%` : "75%" }}
+                                transition={{ duration: 0.3 }}
+                              />
+                            ) : displayPct > 0 ? (
+                              <motion.div
+                                className="h-full bg-primary rounded-full"
+                                animate={{ width: `${displayPct}%` }}
+                                transition={{ duration: 0.3, ease: "easeOut" }}
+                              />
+                            ) : (
+                              <motion.div
+                                className="h-full bg-primary rounded-full w-1/3"
+                                animate={{ x: ["-100%", "300%"] }}
+                                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                              />
                             )}
                           </div>
-                        </div>
 
-                        {/* Indeterminate progress bar during loading, full bar on done */}
-                        <div className="w-full h-1 bg-border/50 rounded-full overflow-hidden mt-3">
-                          {loadingProgress.done ? (
-                            <motion.div
-                              className="h-full bg-primary rounded-full"
-                              initial={{ width: "0%" }}
-                              animate={{ width: "100%" }}
-                              transition={{ duration: 0.4, ease: "easeOut" }}
-                            />
-                          ) : (
-                            <motion.div
-                              className="h-full bg-primary rounded-full w-1/3"
-                              animate={{ x: ["-100%", "300%"] }}
-                              transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-                            />
+                          {/* Retry button for failed/incomplete */}
+                          {(loadingProgress.status === "failed" || loadingProgress.status === "incomplete") && (
+                            <div className="flex gap-2 mt-3">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                                onClick={handleRetry}
+                              >
+                                <RotateCcw className="h-3.5 w-3.5" />
+                                Reintentar
+                              </Button>
+                            </div>
                           )}
-                        </div>
-                      </motion.div>
-                    )}
+                        </motion.div>
+                      )
+                    })()}
                   </div>
                 )}
 
@@ -1056,25 +1250,42 @@ export function GiveawayWizard() {
                     </Button>
                   ) : (
                     <div className="text-right">
-                      <Button
-                        onClick={handleStartGiveaway}
-                        disabled={isLoading}
-                        className="gap-2 h-11 px-6 rounded-lg bg-primary hover:bg-primary/90"
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Procesando...
-                          </>
-                        ) : (
-                          <>
-                            <Play className="h-4 w-4" />
-                            Ejecutar sorteo
-                          </>
+                      <div className="flex gap-2 justify-end">
+                        {/* Continue with partial data when loading and enough participants */}
+                        {loadingProgress?.status === "loading" && loadingProgress.uniqueParticipants >= 10 && (
+                          <Button
+                            variant="outline"
+                            onClick={handleContinuePartial}
+                            className="gap-2 h-11 px-5 rounded-lg border-border/50"
+                          >
+                            <Users className="h-4 w-4" />
+                            Continuar con {loadingProgress.uniqueParticipants.toLocaleString("es-AR")}
+                          </Button>
                         )}
-                      </Button>
+                        <Button
+                          onClick={handleExecuteGiveaway}
+                          disabled={loadingProgress?.status !== "complete"}
+                          className="gap-2 h-11 px-6 rounded-lg bg-primary hover:bg-primary/90"
+                        >
+                          {loadingProgress?.status === "loading" ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Descargando...
+                            </>
+                          ) : (
+                            <>
+                              <Play className="h-4 w-4" />
+                              Ejecutar sorteo
+                            </>
+                          )}
+                        </Button>
+                      </div>
                       <p className="text-xs text-muted-foreground mt-2 max-w-[260px] ml-auto">
-                        Selección mediante algoritmo aleatorio verificable
+                        {loadingProgress?.status === "loading"
+                          ? loadingProgress.uniqueParticipants >= 10
+                            ? "Podés continuar con los datos parciales o esperar a que termine"
+                            : "Esperando a que se descarguen los comentarios..."
+                          : "Selección mediante algoritmo aleatorio verificable"}
                       </p>
                     </div>
                   )}

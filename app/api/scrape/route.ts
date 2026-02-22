@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractShortcode, scrapePostInfo } from "@/lib/scraper"
+import { createJob, getJobByShortcode } from "@/lib/scrape-job-store"
+import { runScrapeJob } from "@/lib/scrape-job-runner"
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +32,22 @@ export async function POST(request: NextRequest) {
     }
 
     const postInfo = await scrapePostInfo(shortcode)
-    return NextResponse.json({ post: postInfo })
+
+    // Auto-start scraping job in background
+    let jobId: string | null = null
+    try {
+      const existing = getJobByShortcode(shortcode)
+      if (existing) {
+        jobId = existing.jobId
+      } else {
+        jobId = createJob(shortcode, postInfo.mediaId, postInfo.commentCount)
+        runScrapeJob(jobId).catch(console.error) // fire-and-forget
+      }
+    } catch {
+      // Best-effort — don't fail the verify because of job creation
+    }
+
+    return NextResponse.json({ post: postInfo, jobId })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error desconocido"
     console.error("Scrape error:", message)
