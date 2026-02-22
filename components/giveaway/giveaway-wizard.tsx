@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -10,14 +10,12 @@ import {
   ArrowRight,
   Loader2,
   Check,
-  Sparkles,
   Users,
   MessageCircle,
   UserX,
   Hash,
   FileText,
   Instagram,
-  Gift,
   Link2,
   Heart,
   MessageSquare,
@@ -29,6 +27,9 @@ import {
   Palette,
   ImageIcon,
   X,
+  Clipboard,
+  Shield,
+  CheckCircle2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -51,9 +52,9 @@ interface PostInfo {
 }
 
 const steps = [
-  { id: 1, name: "Publicacion", icon: Instagram, color: "#820AD1" },
-  { id: 2, name: "Filtros", icon: Settings, color: "#4ECDC4" },
-  { id: 3, name: "Sortear", icon: Play, color: "#B76EF0" },
+  { id: 1, name: "Publicacion", icon: Instagram },
+  { id: 2, name: "Reglas", icon: Settings },
+  { id: 3, name: "Ejecutar", icon: Play },
 ]
 
 const ACCENT_PRESETS = ["#820AD1", "#4ECDC4", "#B76EF0", "#C792EA", "#45B7D1", "#D2248F"]
@@ -80,7 +81,21 @@ export function GiveawayWizard() {
   })
   const [excludeInput, setExcludeInput] = useState("")
   const [keywordInput, setKeywordInput] = useState("")
-  const [loadingProgress, setLoadingProgress] = useState("")
+  const [loadingProgress, setLoadingProgress] = useState<{
+    current: number
+    total: number
+    percent: number
+    done: boolean
+  } | null>(null)
+
+  // Prefill URL from hero section
+  useEffect(() => {
+    const prefill = sessionStorage.getItem("prefillUrl")
+    if (prefill) {
+      setPostUrl(prefill)
+      sessionStorage.removeItem("prefillUrl")
+    }
+  }, [])
 
   const isValidInstagramUrl = (url: string) => {
     return (
@@ -88,6 +103,17 @@ export function GiveawayWizard() {
       url.includes("instagram.com/reel/") ||
       url.includes("instagram.com/tv/")
     )
+  }
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      setPostUrl(text)
+      setVerifyError("")
+      setPostInfo(null)
+    } catch {
+      // Clipboard access denied
+    }
   }
 
   const handleVerifyPost = async () => {
@@ -105,7 +131,7 @@ export function GiveawayWizard() {
       const data = await res.json()
 
       if (!res.ok) {
-        setVerifyError(data.error || "Error al verificar el post")
+        setVerifyError(data.error || "Error al verificar la publicacion")
         return
       }
 
@@ -134,7 +160,6 @@ export function GiveawayWizard() {
     if (!postInfo) return
     setIsLoading(true)
 
-    // Load all comments from the post via scraping
     const allComments: {
       id: string
       username: string
@@ -148,9 +173,16 @@ export function GiveawayWizard() {
     while (hasMore) {
       try {
         page++
-        setLoadingProgress(
-          `Cargando comentarios... (${allComments.length} de ~${postInfo.commentCount})`
-        )
+        const displayTotal = Math.max(allComments.length, postInfo.commentCount)
+        const pct = displayTotal > 0
+          ? Math.min(Math.round((allComments.length / displayTotal) * 100), 99)
+          : 0
+        setLoadingProgress({
+          current: allComments.length,
+          total: displayTotal,
+          percent: pct,
+          done: false,
+        })
 
         const url = `/api/scrape/comments?shortcode=${postInfo.shortcode}${cursor ? `&cursor=${cursor}` : ""}`
         const res = await fetch(url)
@@ -158,7 +190,7 @@ export function GiveawayWizard() {
 
         if (!res.ok) {
           if (page === 1) {
-            setVerifyError(data.error || "Error al cargar comentarios")
+            setVerifyError(data.error || "Error al procesar comentarios")
             setIsLoading(false)
             return
           }
@@ -177,7 +209,6 @@ export function GiveawayWizard() {
         hasMore = data.hasMore
         cursor = data.cursor
 
-        // Small delay to avoid rate limiting
         if (hasMore) {
           await new Promise((r) => setTimeout(r, 300))
         }
@@ -186,9 +217,13 @@ export function GiveawayWizard() {
       }
     }
 
-    setLoadingProgress(`${allComments.length} comentarios cargados!`)
+    setLoadingProgress({
+      current: allComments.length,
+      total: allComments.length,
+      percent: 100,
+      done: true,
+    })
 
-    // Store data for the result page
     const isFree = isFreeGiveaway(settings, allComments.length)
     sessionStorage.setItem("giveawaySettings", JSON.stringify(settings))
     sessionStorage.setItem("giveawayParticipants", JSON.stringify(allComments))
@@ -207,7 +242,7 @@ export function GiveawayWizard() {
   const estimatedFree = postInfo ? isFreeGiveaway(settings, postInfo.commentCount) : false
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/20">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-4xl px-4 py-8 lg:py-12">
         {/* Header */}
         <motion.div
@@ -215,72 +250,66 @@ export function GiveawayWizard() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-10"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            <Gift className="w-4 h-4" />
-            Nuevo Sorteo
-          </div>
           <h1 className="text-3xl lg:text-4xl font-bold text-foreground">
-            Crea tu sorteo en segundos
+            Configurar sorteo
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Solo 3 pasos para elegir a tus ganadores
+            Tres pasos para seleccionar ganadores de forma verificable
           </p>
         </motion.div>
 
         {/* Progress Steps */}
         <div className="mb-10">
-          <div className="flex items-center justify-between max-w-md mx-auto">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex flex-1 items-center">
-                <div className="flex flex-col items-center relative">
-                  <motion.div
-                    initial={false}
-                    animate={{
-                      scale: currentStep === step.id ? 1.1 : 1,
-                      backgroundColor:
-                        currentStep >= step.id ? step.color : "transparent",
-                    }}
-                    className={`flex h-14 w-14 items-center justify-center rounded-2xl border-2 transition-all shadow-lg ${
-                      currentStep >= step.id
-                        ? "border-transparent"
-                        : "border-border bg-card"
-                    }`}
-                    style={{
-                      boxShadow:
+          <div className="relative flex justify-between max-w-md mx-auto">
+            {/* Connector lines — behind circles, centered on icon row */}
+            <div className="absolute top-[21px] left-[22px] right-[22px] flex">
+              <div
+                className={`flex-1 h-0.5 rounded-full transition-colors duration-300 ${
+                  currentStep > 1 ? "bg-primary" : "bg-border"
+                }`}
+              />
+              <div
+                className={`flex-1 h-0.5 rounded-full transition-colors duration-300 ${
+                  currentStep > 2 ? "bg-primary" : "bg-border"
+                }`}
+              />
+            </div>
+
+            {/* Step icons + labels */}
+            {steps.map((step) => (
+              <div key={step.id} className="flex flex-col items-center relative z-10">
+                <motion.div
+                  initial={false}
+                  animate={{
+                    scale: currentStep === step.id ? 1.05 : 1,
+                  }}
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl border-2 transition-all ${
+                    currentStep >= step.id
+                      ? "border-primary bg-primary"
+                      : "border-border bg-card"
+                  }`}
+                >
+                  {currentStep > step.id ? (
+                    <Check className="h-4 w-4 text-primary-foreground" />
+                  ) : (
+                    <step.icon
+                      className={`h-4 w-4 ${
                         currentStep >= step.id
-                          ? `0 8px 24px ${step.color}40`
-                          : "none",
-                    }}
-                  >
-                    {currentStep > step.id ? (
-                      <Check className="h-6 w-6 text-white" />
-                    ) : (
-                      <step.icon
-                        className={`h-6 w-6 ${
-                          currentStep >= step.id
-                            ? "text-white"
-                            : "text-muted-foreground"
-                        }`}
-                      />
-                    )}
-                  </motion.div>
-                  <span
-                    className={`mt-2 text-sm font-medium ${
-                      currentStep >= step.id
-                        ? "text-foreground"
-                        : "text-muted-foreground"
-                    }`}
-                  >
-                    {step.name}
-                  </span>
-                </div>
-                {index < steps.length - 1 && (
-                  <div
-                    className={`h-1 flex-1 mx-2 rounded-full transition-colors ${
-                      currentStep > step.id ? "bg-[#4ECDC4]" : "bg-border"
-                    }`}
-                  />
-                )}
+                          ? "text-primary-foreground"
+                          : "text-muted-foreground"
+                      }`}
+                    />
+                  )}
+                </motion.div>
+                <span
+                  className={`mt-2 text-xs font-medium ${
+                    currentStep >= step.id
+                      ? "text-foreground"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {step.name}
+                </span>
               </div>
             ))}
           </div>
@@ -295,29 +324,26 @@ export function GiveawayWizard() {
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="bg-card rounded-3xl border border-border/50 shadow-xl overflow-hidden">
+            <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
               <div className="p-6 sm:p-8 lg:p-10">
                 {/* Step 1: Paste URL + Verify */}
                 {currentStep === 1 && (
                   <div className="space-y-8">
                     <div className="text-center">
-                      <div
-                        className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-                        style={{ backgroundColor: "rgba(255, 107, 107, 0.1)" }}
-                      >
-                        <Instagram className="w-8 h-8 text-[#820AD1]" />
+                      <div className="w-14 h-14 rounded-xl bg-primary/8 mx-auto mb-4 flex items-center justify-center">
+                        <Instagram className="w-7 h-7 text-primary" />
                       </div>
                       <h2 className="text-2xl font-bold text-foreground">
-                        Pega el enlace de Instagram
+                        URL de la publicacion
                       </h2>
-                      <p className="mt-2 text-muted-foreground">
-                        Acepta posts, reels y carruseles
+                      <p className="mt-2 text-muted-foreground text-sm">
+                        Posts, reels y carruseles de Instagram
                       </p>
                     </div>
 
                     <div className="max-w-lg mx-auto space-y-4">
-                      {/* URL Input + Verify button */}
-                      <div className="flex gap-3">
+                      {/* URL Input + Paste + Verify */}
+                      <div className="flex gap-2">
                         <div className="relative flex-1">
                           <Input
                             placeholder="https://www.instagram.com/p/ABC123..."
@@ -332,19 +358,27 @@ export function GiveawayWizard() {
                                 handleVerifyPost()
                               }
                             }}
-                            className="h-14 pl-12 text-base bg-secondary/50 border-border/50 rounded-xl focus:ring-2 focus:ring-primary/20"
+                            className="h-12 pl-11 text-sm bg-secondary/30 border-border/50 rounded-lg"
                           />
-                          <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                          <Link2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         </div>
+                        <Button
+                          variant="outline"
+                          onClick={handlePaste}
+                          className="h-12 px-3.5 rounded-lg border-border/50"
+                          title="Pegar"
+                        >
+                          <Clipboard className="w-4 h-4" />
+                        </Button>
                         <Button
                           onClick={handleVerifyPost}
                           disabled={!isValidInstagramUrl(postUrl) || verifying}
-                          className="h-14 px-6 rounded-xl bg-gradient-to-r from-primary to-[#9B44D8] hover:opacity-90"
+                          className="h-12 px-5 rounded-lg bg-primary hover:bg-primary/90"
                         >
                           {verifying ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            <Search className="w-5 h-5" />
+                            <Search className="w-4 h-4" />
                           )}
                         </Button>
                       </div>
@@ -357,8 +391,26 @@ export function GiveawayWizard() {
                           className="text-sm text-destructive flex items-center gap-2"
                         >
                           <AlertCircle className="w-4 h-4" />
-                          Ingresa una URL valida de Instagram
+                          URL de Instagram no valida
                         </motion.p>
+                      )}
+
+                      {/* Skeleton loader while verifying */}
+                      {verifying && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="p-5 rounded-xl bg-secondary/30 border border-border/50 space-y-4"
+                        >
+                          <div className="flex gap-4">
+                            <div className="w-20 h-20 rounded-lg bg-secondary animate-pulse" />
+                            <div className="flex-1 space-y-3">
+                              <div className="h-4 w-24 bg-secondary animate-pulse rounded" />
+                              <div className="h-3 w-full bg-secondary animate-pulse rounded" />
+                              <div className="h-3 w-3/4 bg-secondary animate-pulse rounded" />
+                            </div>
+                          </div>
+                        </motion.div>
                       )}
 
                       {/* Verify error */}
@@ -366,7 +418,7 @@ export function GiveawayWizard() {
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="p-4 rounded-xl bg-destructive/10 border border-destructive/20"
+                          className="p-4 rounded-lg bg-destructive/10 border border-destructive/20"
                         >
                           <div className="text-sm text-destructive flex items-start gap-2">
                             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -382,24 +434,24 @@ export function GiveawayWizard() {
                       {/* Post preview */}
                       {postInfo && (
                         <motion.div
-                          initial={{ opacity: 0, scale: 0.95 }}
+                          initial={{ opacity: 0, scale: 0.98 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="p-5 rounded-2xl bg-secondary/30 border border-primary/20 space-y-4"
+                          className="p-5 rounded-xl bg-secondary/30 border border-primary/15 space-y-4"
                         >
                           <div className="flex items-center gap-2 text-sm text-primary font-medium">
                             <Check className="w-4 h-4" />
-                            Post verificado
+                            Publicacion verificada
                           </div>
                           <div className="flex gap-4">
                             {postInfo.displayUrl && (
                               <img
                                 src={postInfo.displayUrl}
                                 alt="Post preview"
-                                className="w-20 h-20 rounded-xl object-cover flex-shrink-0"
+                                className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
                               />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-foreground">
+                              <p className="font-medium text-foreground text-sm">
                                 @{postInfo.ownerUsername}
                               </p>
                               <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
@@ -423,62 +475,60 @@ export function GiveawayWizard() {
                     </div>
 
                     {/* Instructions */}
-                    <div className="max-w-lg mx-auto p-5 rounded-2xl bg-secondary/30 border border-border/50">
-                      <h3 className="font-medium text-foreground mb-3 flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                        Como obtener el enlace
-                      </h3>
-                      <ol className="space-y-2 text-sm text-muted-foreground">
-                        <li className="flex items-start gap-3">
-                          <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">
-                            1
-                          </span>
-                          Abre la publicacion en Instagram
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">
-                            2
-                          </span>
-                          Haz clic en los tres puntos (...)
-                        </li>
-                        <li className="flex items-start gap-3">
-                          <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">
-                            3
-                          </span>
-                          Selecciona &quot;Copiar enlace&quot;
-                        </li>
-                      </ol>
-                    </div>
+                    {!postInfo && !verifying && (
+                      <div className="max-w-lg mx-auto p-5 rounded-xl bg-secondary/30 border border-border/50">
+                        <h3 className="font-medium text-foreground text-sm mb-3">
+                          Como obtener la URL
+                        </h3>
+                        <ol className="space-y-2 text-sm text-muted-foreground">
+                          <li className="flex items-start gap-3">
+                            <span className="w-5 h-5 rounded bg-primary/8 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">
+                              1
+                            </span>
+                            Abre la publicacion en Instagram
+                          </li>
+                          <li className="flex items-start gap-3">
+                            <span className="w-5 h-5 rounded bg-primary/8 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">
+                              2
+                            </span>
+                            Toca los tres puntos (...)
+                          </li>
+                          <li className="flex items-start gap-3">
+                            <span className="w-5 h-5 rounded bg-primary/8 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">
+                              3
+                            </span>
+                            Selecciona &quot;Copiar enlace&quot;
+                          </li>
+                        </ol>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* Step 2: Filters */}
                 {currentStep === 2 && (
-                  <div className="space-y-8">
+                  <div className="space-y-6">
                     <div className="text-center">
-                      <div
-                        className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-                        style={{ backgroundColor: "rgba(78, 205, 196, 0.1)" }}
-                      >
-                        <Settings className="w-8 h-8 text-[#4ECDC4]" />
+                      <div className="w-14 h-14 rounded-xl bg-primary/8 mx-auto mb-4 flex items-center justify-center">
+                        <Settings className="w-7 h-7 text-primary" />
                       </div>
                       <h2 className="text-2xl font-bold text-foreground">
-                        Configura los filtros
+                        Reglas del sorteo
                       </h2>
-                      <p className="mt-2 text-muted-foreground">
-                        Personaliza las reglas de tu sorteo
+                      <p className="mt-2 text-muted-foreground text-sm">
+                        Define los criterios de participacion
                       </p>
                     </div>
 
                     {/* Filter cards grid */}
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="grid sm:grid-cols-2 gap-3">
                       {/* Winners */}
-                      <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50 space-y-3">
+                      <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-3 card-hover">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#B76EF0]/20 flex items-center justify-center">
-                            <Users className="w-5 h-5 text-[#9B44D8]" />
+                          <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center">
+                            <Users className="w-4 h-4 text-primary" />
                           </div>
-                          <Label className="font-medium text-foreground">
+                          <Label className="font-medium text-foreground text-sm">
                             Ganadores
                           </Label>
                         </div>
@@ -493,17 +543,17 @@ export function GiveawayWizard() {
                               numberOfWinners: parseInt(e.target.value) || 1,
                             })
                           }
-                          className="bg-card border-border/50 rounded-xl"
+                          className="bg-card border-border/50 rounded-lg"
                         />
                       </div>
 
                       {/* Mentions */}
-                      <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50 space-y-3">
+                      <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-3 card-hover">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#C792EA]/20 flex items-center justify-center">
-                            <MessageCircle className="w-5 h-5 text-[#C792EA]" />
+                          <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center">
+                            <MessageCircle className="w-4 h-4 text-primary" />
                           </div>
-                          <Label className="font-medium text-foreground">
+                          <Label className="font-medium text-foreground text-sm">
                             Menciones minimas
                           </Label>
                         </div>
@@ -518,17 +568,17 @@ export function GiveawayWizard() {
                               requireMentions: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="bg-card border-border/50 rounded-xl"
+                          className="bg-card border-border/50 rounded-lg"
                         />
                       </div>
 
                       {/* Min length */}
-                      <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50 space-y-3">
+                      <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-3 card-hover">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#45B7D1]/20 flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-[#45B7D1]" />
+                          <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center">
+                            <FileText className="w-4 h-4 text-primary" />
                           </div>
-                          <Label className="font-medium text-foreground">
+                          <Label className="font-medium text-foreground text-sm">
                             Caracteres minimos
                           </Label>
                         </div>
@@ -543,19 +593,19 @@ export function GiveawayWizard() {
                               minCommentLength: parseInt(e.target.value) || 0,
                             })
                           }
-                          className="bg-card border-border/50 rounded-xl"
+                          className="bg-card border-border/50 rounded-lg"
                         />
                       </div>
 
                       {/* Filter duplicates */}
-                      <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50">
+                      <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 card-hover">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-[#820AD1]/20 flex items-center justify-center">
-                              <Hash className="w-5 h-5 text-[#820AD1]" />
+                            <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center">
+                              <Hash className="w-4 h-4 text-primary" />
                             </div>
                             <div>
-                              <Label className="font-medium text-foreground">
+                              <Label className="font-medium text-foreground text-sm">
                                 Sin duplicados
                               </Label>
                               <p className="text-xs text-muted-foreground">
@@ -577,13 +627,13 @@ export function GiveawayWizard() {
                     </div>
 
                     {/* Exclude accounts */}
-                    <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50 space-y-3">
+                    <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-3 card-hover">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#D2248F]/20 flex items-center justify-center">
-                          <UserX className="w-5 h-5 text-[#D2248F]" />
+                        <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center">
+                          <UserX className="w-4 h-4 text-primary" />
                         </div>
                         <div>
-                          <Label className="font-medium text-foreground">
+                          <Label className="font-medium text-foreground text-sm">
                             Excluir cuentas
                           </Label>
                           <p className="text-xs text-muted-foreground">
@@ -602,26 +652,26 @@ export function GiveawayWizard() {
                             .filter((a) => a.length > 0)
                           setSettings({ ...settings, excludeAccounts: accounts })
                         }}
-                        className="bg-card border-border/50 rounded-xl min-h-[80px]"
+                        className="bg-card border-border/50 rounded-lg min-h-[80px]"
                       />
                     </div>
 
                     {/* Keyword filter */}
-                    <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50 space-y-3">
+                    <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-3 card-hover">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#45B7D1]/20 flex items-center justify-center">
-                          <Tag className="w-5 h-5 text-[#45B7D1]" />
+                        <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center">
+                          <Tag className="w-4 h-4 text-primary" />
                         </div>
                         <div className="flex-1">
-                          <Label className="font-medium text-foreground">
-                            Filtro por palabras
+                          <Label className="font-medium text-foreground text-sm">
+                            Filtro por palabras clave
                           </Label>
                           <p className="text-xs text-muted-foreground">
-                            Solo incluir comentarios con estas palabras o hashtags
+                            Solo participan comentarios que contengan estas palabras
                           </p>
                         </div>
                         {settings.keywordFilter.length > 0 && (
-                          <Badge className="bg-[#45B7D1]/20 text-[#45B7D1] border-0">+$1.000</Badge>
+                          <Badge variant="outline" className="text-primary border-primary/30 text-xs">+$1.000</Badge>
                         )}
                       </div>
                       <Input
@@ -641,15 +691,15 @@ export function GiveawayWizard() {
                             setKeywordInput("")
                           }
                         }}
-                        className="bg-card border-border/50 rounded-xl"
+                        className="bg-card border-border/50 rounded-lg"
                       />
                       {settings.keywordFilter.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                           {settings.keywordFilter.map((kw) => (
                             <Badge
                               key={kw}
                               variant="secondary"
-                              className="gap-1 cursor-pointer hover:bg-destructive/20 transition-colors"
+                              className="gap-1 cursor-pointer hover:bg-destructive/20 transition-colors text-xs"
                               onClick={() =>
                                 setSettings(prev => ({
                                   ...prev,
@@ -665,21 +715,21 @@ export function GiveawayWizard() {
                     </div>
 
                     {/* Backup winners */}
-                    <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50 space-y-3">
+                    <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-3 card-hover">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#D2248F]/20 flex items-center justify-center">
-                          <UserPlus className="w-5 h-5 text-[#D2248F]" />
+                        <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center">
+                          <UserPlus className="w-4 h-4 text-primary" />
                         </div>
                         <div className="flex-1">
-                          <Label className="font-medium text-foreground">
+                          <Label className="font-medium text-foreground text-sm">
                             Ganadores suplentes
                           </Label>
                           <p className="text-xs text-muted-foreground">
-                            Suplentes en caso de que un ganador no reclame
+                            Respaldo en caso de que un ganador no reclame
                           </p>
                         </div>
                         {settings.backupWinners > 0 && (
-                          <Badge className="bg-[#D2248F]/20 text-[#D2248F] border-0">+$1.000</Badge>
+                          <Badge variant="outline" className="text-primary border-primary/30 text-xs">+$1.000</Badge>
                         )}
                       </div>
                       <Input
@@ -693,28 +743,28 @@ export function GiveawayWizard() {
                             backupWinners: Math.max(0, Math.min(10, parseInt(e.target.value) || 0)),
                           }))
                         }
-                        className="bg-card border-border/50 rounded-xl"
+                        className="bg-card border-border/50 rounded-lg"
                       />
                     </div>
 
                     {/* Personalization section */}
-                    <div className="pt-4">
-                      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+                    <div className="pt-2">
+                      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
                         Personalizacion
                       </h3>
-                      <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="grid sm:grid-cols-2 gap-3">
                         {/* Logo upload */}
-                        <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50 space-y-3">
+                        <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-3 card-hover">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                              <ImageIcon className="w-5 h-5 text-primary" />
+                            <div className="w-9 h-9 rounded-lg bg-primary/8 flex items-center justify-center">
+                              <ImageIcon className="w-4 h-4 text-primary" />
                             </div>
                             <div>
-                              <Label className="font-medium text-foreground">
-                                Tu logo
+                              <Label className="font-medium text-foreground text-sm">
+                                Logo del sorteo
                               </Label>
                               <p className="text-xs text-muted-foreground">
-                                Aparece en los resultados
+                                Visible en resultados e imagen
                               </p>
                             </div>
                           </div>
@@ -723,7 +773,7 @@ export function GiveawayWizard() {
                               <img
                                 src={settings.logoDataUrl}
                                 alt="Logo"
-                                className="w-14 h-14 rounded-xl object-contain bg-card border border-border/50"
+                                className="w-12 h-12 rounded-lg object-contain bg-card border border-border/50"
                               />
                               <Button
                                 variant="outline"
@@ -735,7 +785,7 @@ export function GiveawayWizard() {
                               </Button>
                             </div>
                           ) : (
-                            <label className="flex items-center justify-center gap-2 h-14 rounded-xl border-2 border-dashed border-border/50 cursor-pointer hover:border-primary/30 hover:bg-primary/5 transition-colors text-sm text-muted-foreground">
+                            <label className="flex items-center justify-center gap-2 h-12 rounded-lg border-2 border-dashed border-border/50 cursor-pointer hover:border-primary/20 hover:bg-primary/[0.02] transition-colors text-sm text-muted-foreground">
                               <ImageIcon className="w-4 h-4" />
                               Subir imagen (max 500KB)
                               <input
@@ -761,20 +811,20 @@ export function GiveawayWizard() {
                         </div>
 
                         {/* Accent color */}
-                        <div className="p-5 rounded-2xl bg-secondary/30 border border-border/50 space-y-3">
+                        <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 space-y-3 card-hover">
                           <div className="flex items-center gap-3">
                             <div
-                              className="w-10 h-10 rounded-xl flex items-center justify-center"
-                              style={{ backgroundColor: `${settings.accentColor}20` }}
+                              className="w-9 h-9 rounded-lg flex items-center justify-center"
+                              style={{ backgroundColor: `${settings.accentColor}15` }}
                             >
-                              <Palette className="w-5 h-5" style={{ color: settings.accentColor }} />
+                              <Palette className="w-4 h-4" style={{ color: settings.accentColor }} />
                             </div>
                             <div>
-                              <Label className="font-medium text-foreground">
+                              <Label className="font-medium text-foreground text-sm">
                                 Color de acento
                               </Label>
                               <p className="text-xs text-muted-foreground">
-                                Personaliza tu sorteo
+                                Aplicado a la imagen de resultados
                               </p>
                             </div>
                           </div>
@@ -783,15 +833,15 @@ export function GiveawayWizard() {
                               type="color"
                               value={settings.accentColor}
                               onChange={(e) => setSettings(prev => ({ ...prev, accentColor: e.target.value }))}
-                              className="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent"
+                              className="w-9 h-9 rounded-lg cursor-pointer border-0 bg-transparent"
                             />
-                            <div className="flex gap-2">
+                            <div className="flex gap-1.5">
                               {ACCENT_PRESETS.map(color => (
                                 <button
                                   key={color}
                                   type="button"
                                   onClick={() => setSettings(prev => ({ ...prev, accentColor: color }))}
-                                  className="w-8 h-8 rounded-full border-2 transition-all hover:scale-110"
+                                  className="w-7 h-7 rounded-lg border-2 transition-all hover:scale-110"
                                   style={{
                                     backgroundColor: color,
                                     borderColor: settings.accentColor === color ? "white" : "transparent",
@@ -806,18 +856,18 @@ export function GiveawayWizard() {
                     </div>
 
                     {/* Price preview */}
-                    <div className={`p-5 rounded-2xl border ${estimatedFree ? "bg-[#4ECDC4]/5 border-[#4ECDC4]/20" : "bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20"}`}>
+                    <div className="p-4 rounded-xl border border-border/50 bg-secondary/20">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <CreditCard className={`w-5 h-5 ${estimatedFree ? "text-[#4ECDC4]" : "text-primary"}`} />
+                          <CreditCard className="w-4 h-4 text-muted-foreground" />
                           <div>
-                            <p className="font-medium text-foreground">
-                              Precio de este sorteo
+                            <p className="font-medium text-foreground text-sm">
+                              Costo del sorteo
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {estimatedFree
-                                ? "Sorteo simple con menos de 500 comentarios"
-                                : "Base $5.000 + filtros activos"}
+                                ? "Sin filtros, hasta 500 comentarios"
+                                : "Base $5.000 + filtros seleccionados"}
                             </p>
                           </div>
                         </div>
@@ -825,9 +875,9 @@ export function GiveawayWizard() {
                           key={estimatedFree ? "free" : price}
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className={`text-2xl font-bold ${estimatedFree ? "text-[#4ECDC4]" : "text-foreground"}`}
+                          className="text-xl font-bold text-foreground"
                         >
-                          {estimatedFree ? "GRATIS" : `$${price.toLocaleString("es-AR")}`}
+                          {estimatedFree ? "Sin costo" : `$${price.toLocaleString("es-AR")}`}
                         </motion.span>
                       </div>
                     </div>
@@ -838,30 +888,27 @@ export function GiveawayWizard() {
                 {currentStep === 3 && (
                   <div className="space-y-8">
                     <div className="text-center">
-                      <div
-                        className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-                        style={{ backgroundColor: "rgba(254, 215, 102, 0.1)" }}
-                      >
-                        <Sparkles className="w-8 h-8 text-[#9B44D8]" />
+                      <div className="w-14 h-14 rounded-xl bg-primary/8 mx-auto mb-4 flex items-center justify-center">
+                        <Shield className="w-7 h-7 text-primary" />
                       </div>
                       <h2 className="text-2xl font-bold text-foreground">
-                        Todo listo para sortear
+                        Configuracion validada
                       </h2>
-                      <p className="mt-2 text-muted-foreground">
-                        Revisa la configuracion y lanza el sorteo
+                      <p className="mt-2 text-muted-foreground text-sm">
+                        Revisa los parametros antes de ejecutar
                       </p>
                     </div>
 
                     {/* Summary */}
-                    <div className="max-w-lg mx-auto space-y-3">
+                    <div className="max-w-lg mx-auto space-y-2">
                       {/* Post preview */}
                       {postInfo && (
-                        <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 flex items-center gap-4">
+                        <div className="p-4 rounded-lg bg-secondary/30 border border-border/50 flex items-center gap-4">
                           {postInfo.displayUrl && (
                             <img
                               src={postInfo.displayUrl}
                               alt="Post"
-                              className="w-14 h-14 rounded-xl object-cover flex-shrink-0"
+                              className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                             />
                           )}
                           <div className="flex-1 min-w-0">
@@ -875,105 +922,59 @@ export function GiveawayWizard() {
                         </div>
                       )}
 
-                      <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 flex items-center justify-between">
-                        <span className="text-muted-foreground">Ganadores</span>
-                        <Badge
-                          variant="secondary"
-                          className="bg-[#B76EF0]/20 text-[#9B44D8]"
-                        >
-                          {settings.numberOfWinners}
-                        </Badge>
+                      {/* Settings summary rows */}
+                      <div className="p-3 rounded-lg bg-secondary/30 border border-border/50 flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Ganadores</span>
+                        <Badge variant="secondary" className="text-xs">{settings.numberOfWinners}</Badge>
                       </div>
-                      <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 flex items-center justify-between">
-                        <span className="text-muted-foreground">
-                          Sin duplicados
-                        </span>
-                        <Badge
-                          variant="secondary"
-                          className={
-                            settings.filterDuplicates
-                              ? "bg-[#4ECDC4]/20 text-[#4ECDC4]"
-                              : "bg-secondary"
-                          }
-                        >
+                      <div className="p-3 rounded-lg bg-secondary/30 border border-border/50 flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Sin duplicados</span>
+                        <Badge variant="secondary" className="text-xs">
                           {settings.filterDuplicates ? "Si" : "No"}
                         </Badge>
                       </div>
-                      <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 flex items-center justify-between">
-                        <span className="text-muted-foreground">
-                          Menciones requeridas
-                        </span>
-                        <Badge
-                          variant="secondary"
-                          className="bg-[#C792EA]/20 text-[#C792EA]"
-                        >
-                          {settings.requireMentions}
-                        </Badge>
-                      </div>
+                      {settings.requireMentions > 0 && (
+                        <div className="p-3 rounded-lg bg-secondary/30 border border-border/50 flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Menciones requeridas</span>
+                          <Badge variant="secondary" className="text-xs">{settings.requireMentions}</Badge>
+                        </div>
+                      )}
                       {settings.excludeAccounts.length > 0 && (
-                        <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 flex items-center justify-between">
-                          <span className="text-muted-foreground">
-                            Cuentas excluidas
-                          </span>
-                          <Badge
-                            variant="secondary"
-                            className="bg-[#D2248F]/20 text-[#D2248F]"
-                          >
-                            {settings.excludeAccounts.length}
-                          </Badge>
+                        <div className="p-3 rounded-lg bg-secondary/30 border border-border/50 flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Cuentas excluidas</span>
+                          <Badge variant="secondary" className="text-xs">{settings.excludeAccounts.length}</Badge>
                         </div>
                       )}
                       {settings.minCommentLength > 0 && (
-                        <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 flex items-center justify-between">
-                          <span className="text-muted-foreground">
-                            Caracteres minimos
-                          </span>
-                          <Badge
-                            variant="secondary"
-                            className="bg-[#45B7D1]/20 text-[#45B7D1]"
-                          >
-                            {settings.minCommentLength}
-                          </Badge>
+                        <div className="p-3 rounded-lg bg-secondary/30 border border-border/50 flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Caracteres minimos</span>
+                          <Badge variant="secondary" className="text-xs">{settings.minCommentLength}</Badge>
                         </div>
                       )}
                       {settings.keywordFilter.length > 0 && (
-                        <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 flex items-center justify-between">
-                          <span className="text-muted-foreground">
-                            Filtro por palabras
-                          </span>
-                          <Badge
-                            variant="secondary"
-                            className="bg-[#45B7D1]/20 text-[#45B7D1]"
-                          >
-                            {settings.keywordFilter.join(", ")}
-                          </Badge>
+                        <div className="p-3 rounded-lg bg-secondary/30 border border-border/50 flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Palabras clave</span>
+                          <Badge variant="secondary" className="text-xs">{settings.keywordFilter.join(", ")}</Badge>
                         </div>
                       )}
                       {settings.backupWinners > 0 && (
-                        <div className="p-4 rounded-xl bg-secondary/30 border border-border/50 flex items-center justify-between">
-                          <span className="text-muted-foreground">
-                            Suplentes
-                          </span>
-                          <Badge
-                            variant="secondary"
-                            className="bg-[#D2248F]/20 text-[#D2248F]"
-                          >
-                            {settings.backupWinners}
-                          </Badge>
+                        <div className="p-3 rounded-lg bg-secondary/30 border border-border/50 flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Suplentes</span>
+                          <Badge variant="secondary" className="text-xs">{settings.backupWinners}</Badge>
                         </div>
                       )}
                     </div>
 
                     {/* Price summary */}
-                    <div className={`max-w-lg mx-auto p-5 rounded-2xl border ${estimatedFree ? "bg-[#4ECDC4]/10 border-[#4ECDC4]/20" : "bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20"}`}>
+                    <div className="max-w-lg mx-auto p-5 rounded-xl bg-secondary/20 border border-border/50">
                       <div className="flex items-center justify-between mb-3">
-                        <p className="font-medium text-foreground flex items-center gap-2">
-                          <CreditCard className={`w-4 h-4 ${estimatedFree ? "text-[#4ECDC4]" : "text-primary"}`} />
-                          {estimatedFree ? "Sorteo gratuito" : "Total a pagar"}
+                        <p className="font-medium text-foreground text-sm flex items-center gap-2">
+                          <CreditCard className="w-4 h-4 text-muted-foreground" />
+                          {estimatedFree ? "Plan actual: Sin costo" : "Costo total"}
                         </p>
-                        <p className={`text-2xl font-bold ${estimatedFree ? "text-[#4ECDC4]" : "text-foreground"}`}>
+                        <p className="text-xl font-bold text-foreground">
                           {estimatedFree ? (
-                            "GRATIS"
+                            "Sin costo"
                           ) : (
                             <>
                               ${price.toLocaleString("es-AR")}
@@ -985,12 +986,11 @@ export function GiveawayWizard() {
                         </p>
                       </div>
                       <p className="text-xs text-muted-foreground text-center">
-                        Al iniciar, cargaremos los{" "}
-                        {postInfo?.commentCount.toLocaleString() || 0} comentarios
-                        reales y seleccionaremos{" "}
+                        Se procesaran {postInfo?.commentCount.toLocaleString() || 0} comentarios
+                        y se seleccionaran{" "}
                         <strong>{settings.numberOfWinners}</strong> ganador
-                        {settings.numberOfWinners > 1 ? "es" : ""}{settings.backupWinners > 0 ? ` + ${settings.backupWinners} suplente${settings.backupWinners > 1 ? "s" : ""}` : ""} al azar de forma
-                        criptograficamente segura.
+                        {settings.numberOfWinners > 1 ? "es" : ""}{settings.backupWinners > 0 ? ` + ${settings.backupWinners} suplente${settings.backupWinners > 1 ? "s" : ""}` : ""} mediante
+                        algoritmo criptografico verificable.
                       </p>
                     </div>
 
@@ -999,10 +999,38 @@ export function GiveawayWizard() {
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="max-w-lg mx-auto p-4 rounded-xl bg-primary/5 border border-primary/20 text-center"
+                        className="max-w-lg mx-auto p-5 rounded-xl bg-secondary/30 border border-border/50"
                       >
-                        <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto mb-2" />
-                        <p className="text-sm text-foreground">{loadingProgress}</p>
+                        <div className="flex items-center gap-3 mb-3">
+                          {loadingProgress.done ? (
+                            <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
+                          ) : (
+                            <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
+                          )}
+                          <p className="text-sm text-foreground">
+                            {loadingProgress.done
+                              ? `${loadingProgress.current.toLocaleString("es-AR")} comentarios procesados`
+                              : "Procesando comentarios del post..."}
+                          </p>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="w-full h-1.5 bg-border/50 rounded-full overflow-hidden mb-2">
+                          <motion.div
+                            className="h-full bg-primary rounded-full"
+                            initial={{ width: "0%" }}
+                            animate={{ width: `${loadingProgress.percent}%` }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>
+                            {loadingProgress.current.toLocaleString("es-AR")} de{" "}
+                            {loadingProgress.total.toLocaleString("es-AR")}
+                          </span>
+                          <span>{loadingProgress.percent}%</span>
+                        </div>
                       </motion.div>
                     )}
                   </div>
@@ -1014,7 +1042,7 @@ export function GiveawayWizard() {
                     variant="outline"
                     onClick={handleBack}
                     disabled={currentStep === 1}
-                    className="gap-2 h-12 px-6 rounded-xl border-2 hover:bg-secondary/50 bg-transparent"
+                    className="gap-2 h-11 px-5 rounded-lg border-border/50 bg-transparent"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Atras
@@ -1024,29 +1052,34 @@ export function GiveawayWizard() {
                     <Button
                       onClick={handleNext}
                       disabled={!canProceed()}
-                      className="gap-2 h-12 px-8 rounded-xl bg-gradient-to-r from-primary to-[#9B44D8] hover:opacity-90 shadow-lg shadow-primary/25"
+                      className="gap-2 h-11 px-6 rounded-lg bg-primary hover:bg-primary/90"
                     >
                       Siguiente
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   ) : (
-                    <Button
-                      onClick={handleStartGiveaway}
-                      disabled={isLoading}
-                      className="gap-2 h-12 px-8 rounded-xl bg-gradient-to-r from-[#B76EF0] to-[#D2248F] text-foreground hover:opacity-90 shadow-lg shadow-[#B76EF0]/25"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          Cargando...
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-5 w-5" />
-                          Iniciar Sorteo
-                        </>
-                      )}
-                    </Button>
+                    <div className="text-right">
+                      <Button
+                        onClick={handleStartGiveaway}
+                        disabled={isLoading}
+                        className="gap-2 h-11 px-6 rounded-lg bg-primary hover:bg-primary/90"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Procesando...
+                          </>
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4" />
+                            Ejecutar sorteo
+                          </>
+                        )}
+                      </Button>
+                      <p className="text-xs text-muted-foreground mt-2 max-w-[260px] ml-auto">
+                        Seleccion mediante algoritmo aleatorio verificable
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>

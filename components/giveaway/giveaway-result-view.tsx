@@ -14,24 +14,27 @@ import {
   Filter,
   Calendar,
   LinkIcon,
-  Sparkles,
   CheckCircle,
-  Video,
   Lock,
   CreditCard,
   Shield,
   Loader2,
+  Maximize,
+  Minimize,
+  Copy,
+  Check,
+  Image as ImageIcon,
+  ArrowRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { WinnerSlotMachine } from "./winner-slot-machine"
 import { ParticipantsList } from "./participants-list"
 import { ShareAnimationModal } from "./share-animation-modal"
+import { TransparencyBlock } from "./transparency-block"
 import { filterParticipants } from "@/lib/giveaway-store"
 import { calculateGiveawayPrice } from "@/lib/pricing"
 import type { Participant, GiveawaySettings } from "@/lib/types"
-
-const DEFAULT_COLORS = ["#820AD1", "#4ECDC4", "#B76EF0", "#C792EA", "#45B7D1", "#D2248F"]
 
 export function GiveawayResultView() {
   const router = useRouter()
@@ -43,8 +46,10 @@ export function GiveawayResultView() {
   const [showAnimation, setShowAnimation] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
-
   const [backupWinnersList, setBackupWinnersList] = useState<Participant[]>([])
+  const [copiedText, setCopiedText] = useState(false)
+
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // Payment states
   const [paymentRequired, setPaymentRequired] = useState(true)
@@ -52,12 +57,11 @@ export function GiveawayResultView() {
   const [showPaywall, setShowPaywall] = useState(false)
   const [price, setPrice] = useState(0)
 
-  // Check payment on load (returning from Mercado Pago)
+  // Check payment on load
   useEffect(() => {
     const status = searchParams.get("status")
     const paymentId = searchParams.get("payment_id") || searchParams.get("collection_id")
 
-    // Check if this is a free giveaway
     const isFree = JSON.parse(sessionStorage.getItem("giveawayIsFree") || "false")
     if (isFree) {
       setPaymentRequired(false)
@@ -65,7 +69,6 @@ export function GiveawayResultView() {
       return
     }
 
-    // Check sessionStorage cache first
     if (sessionStorage.getItem("giveawayPaid") === "true") {
       setPaymentRequired(false)
       setPaymentStatus("approved")
@@ -85,11 +88,8 @@ export function GiveawayResultView() {
             setPaymentStatus("failed")
           }
         })
-        .catch(() => {
-          setPaymentStatus("failed")
-        })
+        .catch(() => setPaymentStatus("failed"))
     } else if (status === "approved") {
-      // auto_return from MP without payment_id — trust the redirect
       setPaymentRequired(false)
       setPaymentStatus("approved")
       sessionStorage.setItem("giveawayPaid", "true")
@@ -105,15 +105,10 @@ export function GiveawayResultView() {
       setSettings(parsed)
       setPrice(calculateGiveawayPrice(parsed))
 
-      // Load real comment data from the API
       const rawComments = JSON.parse(storedParticipants) as {
-        id: string
-        username: string
-        comment: string
-        timestamp: string
+        id: string; username: string; comment: string; timestamp: string
       }[]
 
-      // Convert to Participant format
       const participants: Participant[] = rawComments.map((c) => ({
         id: c.id,
         username: c.username,
@@ -123,12 +118,21 @@ export function GiveawayResultView() {
       }))
 
       setAllParticipants(participants)
-      const filtered = filterParticipants(participants, parsed)
-      setFilteredParticipants(filtered)
+      setFilteredParticipants(filterParticipants(participants, parsed))
     } else {
       router.push("/sorteo/nuevo")
     }
   }, [router])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isFullscreen) setIsFullscreen(false)
+      if (e.key === "f" && !e.metaKey && !e.ctrlKey && showAnimation) setIsFullscreen((v) => !v)
+    }
+    window.addEventListener("keydown", handleKey)
+    return () => window.removeEventListener("keydown", handleKey)
+  }, [isFullscreen, showAnimation])
 
   const handleShuffleReady = useCallback(() => {
     if (paymentRequired && paymentStatus !== "approved") {
@@ -139,22 +143,15 @@ export function GiveawayResultView() {
   const handlePayment = async () => {
     if (!settings) return
     setPaymentStatus("creating")
-
     try {
       const res = await fetch("/api/payment/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          price,
-          title: `Sorteo Instagram - SorteosWeb`,
-        }),
+        body: JSON.stringify({ price, title: `Sorteo Instagram - SorteosWeb` }),
       })
-
       const data = await res.json()
-
       if (data.init_point) {
         setPaymentStatus("waiting")
-        // Save current state so we can resume after redirect
         sessionStorage.setItem("giveawayPaymentPending", "true")
         window.location.href = data.init_point
       } else {
@@ -168,7 +165,10 @@ export function GiveawayResultView() {
   const handleAnimationComplete = (selectedWinners: Participant[], selectedBackups: Participant[]) => {
     setWinners(selectedWinners)
     setBackupWinnersList(selectedBackups)
-    setTimeout(() => setShowAnimation(false), 2000)
+    setTimeout(() => {
+      setShowAnimation(false)
+      setIsFullscreen(false)
+    }, 2500)
   }
 
   const handleNewGiveaway = () => {
@@ -188,39 +188,32 @@ export function GiveawayResultView() {
 
   const handleExport = async () => {
     setIsExporting(true)
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await new Promise((r) => setTimeout(r, 500))
 
-    const content = `
-CERTIFICADO DE SORTEO - SORTEOSWEB
+    const content = `CERTIFICADO DE SORTEO — SORTEOSWEB
 ================================
 Fecha: ${new Date().toLocaleDateString("es-ES", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
     })}
 
 Publicacion: ${settings?.postUrl}
 
-CONFIGURACION DEL SORTEO:
-- Total de comentarios: ${allParticipants.length}
-- Participantes validos (post filtros): ${filteredParticipants.length}
-- Numero de ganadores: ${settings?.numberOfWinners}
+CONFIGURACION:
+- Comentarios totales: ${allParticipants.length}
+- Participantes validos: ${filteredParticipants.length}
+- Ganadores seleccionados: ${settings?.numberOfWinners}
 - Filtrar duplicados: ${settings?.filterDuplicates ? "Si" : "No"}
 - Menciones requeridas: ${settings?.requireMentions}
 - Caracteres minimos: ${settings?.minCommentLength || 0}
 - Cuentas excluidas: ${settings?.excludeAccounts.length ? settings.excludeAccounts.join(", ") : "Ninguna"}
 
 GANADORES:
-${winners.map((w, i) => `${i + 1}. @${w.username} - "${w.comment}"`).join("\n")}
-${backupWinnersList.length > 0 ? `\nSUPLENTES:\n${backupWinnersList.map((w, i) => `${i + 1}. @${w.username} - "${w.comment}"`).join("\n")}\n` : ""}
+${winners.map((w, i) => `${i + 1}. @${w.username} — "${w.comment}"`).join("\n")}
+${backupWinnersList.length > 0 ? `\nSUPLENTES:\n${backupWinnersList.map((w, i) => `${i + 1}. @${w.username} — "${w.comment}"`).join("\n")}\n` : ""}
 ================================
-Metodo de seleccion: crypto.getRandomValues() (aleatorio criptografico)
-Sorteo realizado con SorteosWeb
-https://sorteosweb.app
-    `.trim()
+Metodo: crypto.getRandomValues() (algoritmo criptografico)
+Sorteo verificable realizado con SorteosWeb
+https://sorteosweb.com.ar`
 
     const blob = new Blob([content], { type: "text/plain" })
     const url = URL.createObjectURL(blob)
@@ -229,57 +222,100 @@ https://sorteosweb.app
     a.download = `sorteo-sorteosweb-${new Date().toISOString().split("T")[0]}.txt`
     a.click()
     URL.revokeObjectURL(url)
-
     setIsExporting(false)
   }
 
-  const handleShare = async () => {
-    const text = `Ganador${winners.length > 1 ? "es" : ""} del sorteo:\n${winners.map((w) => `@${w.username}`).join("\n")}\n\nSorteo realizado con @sorteosweb`
+  const handleCopyText = async () => {
+    const text = winners.length > 1
+      ? `Resultado del sorteo:\n\n${winners.map((w, i) => `${i + 1}. @${w.username}`).join("\n")}${backupWinnersList.length > 0 ? `\n\nSuplentes:\n${backupWinnersList.map((w, i) => `${i + 1}. @${w.username}`).join("\n")}` : ""}\n\nSorteo verificable realizado con SorteosWeb`
+      : `Resultado del sorteo: @${winners[0]?.username}\n\nSorteo verificable realizado con SorteosWeb`
 
+    await navigator.clipboard.writeText(text)
+    setCopiedText(true)
+    setTimeout(() => setCopiedText(false), 2000)
+  }
+
+  const handleShare = async () => {
+    const text = `Resultado del sorteo:\n${winners.map((w) => `@${w.username}`).join("\n")}\n\nSorteo verificable con @sorteosweb`
     if (navigator.share) {
-      await navigator.share({
-        title: "Resultado del Sorteo - SorteosWeb",
-        text,
-      })
+      await navigator.share({ title: "Resultado del Sorteo — SorteosWeb", text })
     } else {
       await navigator.clipboard.writeText(text)
-      alert("Resultado copiado al portapapeles")
     }
   }
 
   if (!settings) {
     return (
-      <div className="flex min-h-[80vh] items-center justify-center bg-gradient-to-b from-background to-secondary/20">
+      <div className="flex min-h-[80vh] items-center justify-center">
         <div className="text-center">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-            className="mx-auto h-16 w-16 rounded-full border-4 border-primary/20 border-t-primary"
+            className="mx-auto h-10 w-10 rounded-full border-2 border-primary/20 border-t-primary"
           />
-          <p className="mt-6 text-muted-foreground">Cargando sorteo...</p>
+          <p className="mt-6 text-sm text-muted-foreground">Cargando resultados...</p>
         </div>
       </div>
     )
   }
 
-  const COLORS = settings?.accentColor
-    ? [settings.accentColor, ...DEFAULT_COLORS.filter(c => c !== settings.accentColor)]
-    : DEFAULT_COLORS
+  // Fullscreen mode
+  if (isFullscreen && showAnimation) {
+    return (
+      <div className="fixed inset-0 z-50 bg-[#0a0a0f]">
+        <div className="absolute top-4 right-4 z-10">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsFullscreen(false)}
+            className="text-white/30 hover:text-white hover:bg-white/10 rounded-lg"
+          >
+            <Minimize className="w-5 h-5" />
+          </Button>
+        </div>
+        <div className="flex items-center justify-center min-h-screen">
+          <WinnerSlotMachine
+            participants={filteredParticipants}
+            numberOfWinners={settings.numberOfWinners}
+            numberOfBackups={settings.backupWinners || 0}
+            onComplete={handleAnimationComplete}
+            pauseBeforeReveal={paymentRequired && paymentStatus !== "approved"}
+            onShuffleReady={handleShuffleReady}
+            isFullscreen
+          />
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/20">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-6xl px-4 py-8">
         {/* Back button */}
-        <Button
-          variant="ghost"
-          asChild
-          className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
-        >
-          <Link href="/sorteo/nuevo">
-            <ArrowLeft className="h-4 w-4" />
-            Nuevo Sorteo
-          </Link>
-        </Button>
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="ghost"
+            asChild
+            className="gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <Link href="/sorteo/nuevo">
+              <ArrowLeft className="h-4 w-4" />
+              Nuevo sorteo
+            </Link>
+          </Button>
+
+          {showAnimation && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsFullscreen(true)}
+              className="gap-2 text-xs rounded-lg"
+            >
+              <Maximize className="w-3.5 h-3.5" />
+              Pantalla completa
+            </Button>
+          )}
+        </div>
 
         {showAnimation && filteredParticipants.length > 0 ? (
           <div className="relative">
@@ -301,47 +337,36 @@ https://sorteosweb.app
                   exit={{ opacity: 0 }}
                   className="absolute inset-0 z-20 flex items-center justify-center"
                 >
-                  {/* Backdrop blur */}
-                  <div className="absolute inset-0 bg-background/60 backdrop-blur-md rounded-3xl" />
-
-                  {/* Paywall card */}
+                  <div className="absolute inset-0 bg-background/60 backdrop-blur-md rounded-2xl" />
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ delay: 0.2, type: "spring", bounce: 0.3 }}
+                    transition={{ delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
                     className="relative z-10 w-full max-w-md mx-4"
                   >
-                    <div className="rounded-3xl border-2 border-primary/30 bg-card p-8 shadow-2xl shadow-primary/10">
-                      {/* Lock icon */}
+                    <div className="rounded-xl border border-border/50 bg-card p-8">
                       <div className="flex justify-center mb-6">
-                        <motion.div
-                          animate={{ scale: [1, 1.1, 1] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                          className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center"
-                        >
-                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-[#9B44D8] flex items-center justify-center shadow-lg">
-                            <Lock className="w-7 h-7 text-white" />
-                          </div>
-                        </motion.div>
+                        <div className="w-14 h-14 rounded-xl bg-primary/8 border border-primary/10 flex items-center justify-center">
+                          <Lock className="w-6 h-6 text-primary" />
+                        </div>
                       </div>
 
-                      <h3 className="text-2xl font-bold text-center text-foreground mb-2">
-                        Los ganadores estan listos!
+                      <h3 className="text-lg font-semibold text-center text-foreground mb-2">
+                        Resultados generados
                       </h3>
-                      <p className="text-center text-muted-foreground mb-6">
-                        Paga para revelar los resultados del sorteo
+                      <p className="text-center text-sm text-muted-foreground mb-6">
+                        Completa el pago para acceder a los resultados
                       </p>
 
-                      {/* Stats */}
                       <div className="grid grid-cols-2 gap-3 mb-6">
-                        <div className="rounded-xl bg-secondary/50 p-3 text-center">
-                          <p className="text-2xl font-bold text-foreground">
+                        <div className="rounded-lg bg-secondary/50 p-3 text-center">
+                          <p className="text-xl font-bold text-foreground">
                             {filteredParticipants.length.toLocaleString()}
                           </p>
                           <p className="text-xs text-muted-foreground">Participantes</p>
                         </div>
-                        <div className="rounded-xl bg-secondary/50 p-3 text-center">
-                          <p className="text-2xl font-bold text-foreground">
+                        <div className="rounded-lg bg-secondary/50 p-3 text-center">
+                          <p className="text-xl font-bold text-foreground">
                             {settings.numberOfWinners}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -350,47 +375,35 @@ https://sorteosweb.app
                         </div>
                       </div>
 
-                      {/* Price */}
-                      <div className="rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 p-4 mb-6 text-center">
-                        <p className="text-sm text-muted-foreground mb-1">Precio total</p>
-                        <p className="text-4xl font-bold text-foreground">
+                      <div className="rounded-lg bg-secondary/30 border border-border/50 p-4 mb-6 text-center">
+                        <p className="text-xs text-muted-foreground mb-1">Costo total</p>
+                        <p className="text-3xl font-bold text-foreground">
                           ${price.toLocaleString("es-AR")}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1">ARS</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">ARS</p>
                       </div>
 
-                      {/* Pay button */}
                       <Button
                         onClick={handlePayment}
                         disabled={paymentStatus === "creating" || paymentStatus === "waiting"}
-                        className="w-full h-14 text-lg gap-3 rounded-2xl bg-gradient-to-r from-[#009ee3] to-[#00b1ea] hover:opacity-90 transition-opacity shadow-lg"
+                        className="w-full h-11 text-base gap-2 rounded-lg bg-[#009ee3] hover:bg-[#0087c9] transition-colors"
                       >
                         {paymentStatus === "creating" || paymentStatus === "waiting" ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Redirigiendo a Mercado Pago...
-                          </>
+                          <><Loader2 className="w-4 h-4 animate-spin" /> Redirigiendo a Mercado Pago...</>
                         ) : paymentStatus === "failed" ? (
-                          <>
-                            <CreditCard className="w-5 h-5" />
-                            Reintentar Pago
-                          </>
+                          <><CreditCard className="w-4 h-4" /> Reintentar pago</>
                         ) : (
-                          <>
-                            <CreditCard className="w-5 h-5" />
-                            Pagar con Mercado Pago
-                          </>
+                          <><CreditCard className="w-4 h-4" /> Pagar con Mercado Pago</>
                         )}
                       </Button>
 
                       {paymentStatus === "failed" && (
-                        <p className="text-center text-sm text-red-400 mt-3">
-                          Hubo un error con el pago. Intenta nuevamente.
+                        <p className="text-center text-xs text-destructive mt-3">
+                          Error en el pago. Intenta nuevamente.
                         </p>
                       )}
 
-                      {/* Security badge */}
-                      <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">
+                      <div className="flex items-center justify-center gap-1.5 mt-4 text-xs text-muted-foreground">
                         <Shield className="w-3 h-3" />
                         Pago seguro con Mercado Pago
                       </div>
@@ -400,99 +413,69 @@ https://sorteosweb.app
               )}
             </AnimatePresence>
 
-            {/* Verifying payment overlay */}
             {paymentStatus === "verifying" && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-3xl">
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-2xl">
                 <div className="text-center">
-                  <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-                  <p className="text-lg font-medium text-foreground">Verificando pago...</p>
-                  <p className="text-sm text-muted-foreground">Esto solo toma un momento</p>
+                  <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+                  <p className="text-sm font-medium text-foreground">Verificando pago...</p>
                 </div>
               </div>
             )}
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Winners Section */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="relative overflow-hidden rounded-3xl border border-border/50 bg-card p-8 lg:p-12"
+              className="rounded-xl border border-border/50 bg-card p-8 lg:p-12"
             >
-              {/* Background decoration */}
-              <div className="absolute inset-0 -z-10">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent/5 rounded-full blur-3xl" />
-              </div>
-
               <div className="text-center mb-10">
                 {settings.logoDataUrl && (
                   <motion.img
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                     src={settings.logoDataUrl}
                     alt="Logo"
-                    className="w-20 h-20 rounded-2xl object-contain mx-auto mb-4"
+                    className="w-14 h-14 rounded-lg object-contain mx-auto mb-4"
                   />
                 )}
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", bounce: 0.5 }}
-                  className="relative w-24 h-24 mx-auto mb-6"
-                >
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#820AD1] via-[#B76EF0] to-[#4ECDC4] animate-spin-slow" />
-                  <div className="absolute inset-1 rounded-full bg-card flex items-center justify-center">
-                    <Trophy className="h-10 w-10 text-[#B76EF0]" />
+                <div className="relative w-14 h-14 mx-auto mb-6">
+                  <div className="absolute inset-0 rounded-full bg-primary/10 blur-lg" />
+                  <div className="relative w-14 h-14 rounded-full bg-primary/8 border border-primary/10 flex items-center justify-center">
+                    <Trophy className="h-6 w-6 text-primary" />
                   </div>
-                </motion.div>
-                <h1 className="text-3xl lg:text-4xl font-bold text-foreground">
-                  {winners.length === 1
-                    ? "Tenemos un Ganador!"
-                    : "Tenemos Ganadores!"}
+                </div>
+                <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+                  Resultado del sorteo
                 </h1>
-                <p className="mt-2 text-muted-foreground">
+                <p className="mt-2 text-sm text-muted-foreground">
                   Sorteo realizado el{" "}
                   {new Date().toLocaleDateString("es-ES", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
+                    day: "numeric", month: "long", year: "numeric",
                   })}
                 </p>
               </div>
 
               {/* Winners Grid */}
-              <div className="flex flex-wrap justify-center gap-4 mb-10">
+              <div className="flex flex-wrap justify-center gap-3 mb-10">
                 {winners.map((winner, index) => (
                   <motion.div
                     key={winner.id}
-                    initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="relative"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <div
-                      className="absolute inset-0 rounded-2xl blur-xl opacity-30"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    />
-                    <div
-                      className="relative flex items-center gap-4 rounded-2xl px-6 py-5 border-2 bg-card"
-                      style={{
-                        borderColor: `${COLORS[index % COLORS.length]}50`,
-                      }}
-                    >
-                      <div
-                        className="flex h-14 w-14 items-center justify-center rounded-xl text-white font-bold text-xl shadow-lg"
-                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                      >
+                    <div className="flex items-center gap-4 rounded-xl px-5 py-4 border border-border/50 bg-card card-hover">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold text-sm">
                         {index + 1}
                       </div>
                       <div className="text-left">
-                        <p className="font-bold text-xl text-foreground">
+                        <p className="font-bold text-lg text-foreground">
                           @{winner.username}
                         </p>
-                        <p className="text-sm text-muted-foreground">
-                          Ganador #{index + 1}
+                        <p className="text-xs text-muted-foreground">
+                          Posicion #{index + 1}
                         </p>
                       </div>
                     </div>
@@ -503,21 +486,19 @@ https://sorteosweb.app
               {/* Backup Winners */}
               {backupWinnersList.length > 0 && (
                 <div className="mb-10">
-                  <h3 className="text-lg font-semibold text-muted-foreground mb-4 text-center">
+                  <p className="text-xs font-medium text-muted-foreground mb-3 text-center uppercase tracking-wider">
                     Suplentes
-                  </h3>
-                  <div className="flex flex-wrap justify-center gap-3">
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2">
                     {backupWinnersList.map((backup, index) => (
                       <motion.div
                         key={backup.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         transition={{ delay: 0.2 + index * 0.1 }}
-                        className="flex items-center gap-3 rounded-xl px-4 py-3 border border-border/50 bg-secondary/30"
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 border border-border/50 bg-secondary/20 text-sm"
                       >
-                        <Badge variant="outline" className="text-xs">
-                          Suplente #{index + 1}
-                        </Badge>
+                        <span className="text-xs text-muted-foreground">S{index + 1}</span>
                         <span className="font-medium text-foreground">@{backup.username}</span>
                       </motion.div>
                     ))}
@@ -525,28 +506,42 @@ https://sorteosweb.app
                 </div>
               )}
 
+              {/* Verification microcopy */}
+              <div className="flex items-center justify-center gap-2 mb-8 text-xs text-muted-foreground">
+                <Shield className="w-3.5 h-3.5" />
+                Este sorteo puede verificarse mediante su ID interno
+              </div>
+
               {/* Action Buttons */}
-              <div className="flex flex-wrap justify-center gap-3">
+              <div className="flex flex-wrap justify-center gap-2">
                 <Button
                   onClick={() => setShowShareModal(true)}
-                  className="gap-2 h-12 px-6 rounded-xl bg-gradient-to-r from-primary to-[#9B44D8] hover:opacity-90 shadow-lg"
+                  className="gap-2 h-10 px-4 rounded-lg bg-primary hover:bg-primary/90 text-sm"
                 >
-                  <Video className="h-4 w-4" />
-                  Crear para Instagram
+                  <ImageIcon className="h-4 w-4" />
+                  Descargar imagen
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleCopyText}
+                  className="gap-2 h-10 px-4 rounded-lg text-sm"
+                >
+                  {copiedText ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copiedText ? "Copiado" : "Copiar texto"}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={handleExport}
                   disabled={isExporting}
-                  className="gap-2 h-12 px-6 rounded-xl border-2 hover:bg-secondary/50 bg-transparent"
+                  className="gap-2 h-10 px-4 rounded-lg text-sm"
                 >
                   <Download className="h-4 w-4" />
-                  {isExporting ? "Exportando..." : "Certificado"}
+                  Certificado
                 </Button>
                 <Button
                   variant="outline"
                   onClick={handleShare}
-                  className="gap-2 h-12 px-6 rounded-xl border-2 hover:bg-secondary/50 bg-transparent"
+                  className="gap-2 h-10 px-4 rounded-lg text-sm"
                 >
                   <Share2 className="h-4 w-4" />
                   Compartir
@@ -554,77 +549,58 @@ https://sorteosweb.app
                 <Button
                   variant="outline"
                   onClick={handleRetry}
-                  className="gap-2 h-12 px-6 rounded-xl border-2 hover:bg-secondary/50 bg-transparent"
+                  className="gap-2 h-10 px-4 rounded-lg text-sm"
                 >
                   <RotateCcw className="h-4 w-4" />
-                  Repetir
+                  Repetir sorteo
                 </Button>
                 <Button
                   variant="outline"
                   onClick={handleNewGiveaway}
-                  className="gap-2 h-12 px-6 rounded-xl border-2 hover:bg-secondary/50 bg-transparent"
+                  className="gap-2 h-10 px-4 rounded-lg text-sm"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  Nuevo Sorteo
+                  <ArrowRight className="h-4 w-4" />
+                  Nuevo sorteo
                 </Button>
               </div>
             </motion.div>
+
+            {/* Transparency Block */}
+            <TransparencyBlock
+              settings={settings}
+              totalComments={allParticipants.length}
+              filteredCount={filteredParticipants.length}
+              winners={winners}
+              backups={backupWinnersList}
+            />
 
             {/* Stats Grid */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+              transition={{ delay: 0.4 }}
+              className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
             >
               {[
-                {
-                  icon: Users,
-                  value: allParticipants.length,
-                  label: "Total comentarios",
-                  color: "#820AD1",
-                },
-                {
-                  icon: Filter,
-                  value: filteredParticipants.length,
-                  label: "Participantes validos",
-                  color: "#4ECDC4",
-                },
-                {
-                  icon: Trophy,
-                  value: winners.length,
-                  label: "Ganadores",
-                  color: "#B76EF0",
-                },
-                {
-                  icon: Calendar,
-                  value: new Date().toLocaleDateString("es-ES", {
-                    day: "numeric",
-                    month: "short",
-                  }),
-                  label: "Fecha del sorteo",
-                  color: "#C792EA",
-                },
+                { icon: Users, value: allParticipants.length, label: "Comentarios totales" },
+                { icon: Filter, value: filteredParticipants.length, label: "Participantes validos" },
+                { icon: Trophy, value: winners.length, label: "Ganadores" },
+                { icon: Calendar, value: new Date().toLocaleDateString("es-ES", { day: "numeric", month: "short" }), label: "Fecha" },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + i * 0.1 }}
-                  className="p-5 rounded-2xl bg-card border border-border/50"
+                  transition={{ delay: 0.45 + i * 0.05 }}
+                  className="p-4 rounded-lg bg-card border border-border/50"
                 >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: `${stat.color}20` }}
-                    >
-                      <stat.icon className="w-6 h-6" style={{ color: stat.color }} />
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-secondary/50 flex items-center justify-center">
+                      <stat.icon className="w-4 h-4 text-muted-foreground" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-foreground">
-                        {stat.value}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                      <p className="text-xl font-bold text-foreground">{stat.value}</p>
+                      <p className="text-xs text-muted-foreground">{stat.label}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -635,61 +611,42 @@ https://sorteosweb.app
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="rounded-2xl bg-card border border-border/50 overflow-hidden"
+              transition={{ delay: 0.5 }}
+              className="rounded-lg bg-card border border-border/50 overflow-hidden"
             >
-              <div className="p-6 border-b border-border/50 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <LinkIcon className="w-5 h-5 text-primary" />
+              <div className="p-5 border-b border-border/50 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-secondary/50 flex items-center justify-center">
+                  <LinkIcon className="w-4 h-4 text-muted-foreground" />
                 </div>
-                <h2 className="text-lg font-semibold text-foreground">
-                  Detalles del Sorteo
+                <h2 className="text-sm font-semibold text-foreground">
+                  Configuracion aplicada
                 </h2>
               </div>
-              <div className="p-6">
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="p-5">
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Publicacion
-                    </p>
-                    <p className="font-medium text-foreground truncate">
+                    <p className="text-xs text-muted-foreground mb-1">Publicacion</p>
+                    <p className="text-sm font-medium text-foreground truncate">
                       {settings.postUrl.replace("https://www.instagram.com/", "")}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Sin duplicados
-                    </p>
-                    <Badge
-                      variant="secondary"
-                      className={
-                        settings.filterDuplicates
-                          ? "bg-[#4ECDC4]/10 text-[#4ECDC4]"
-                          : "bg-secondary"
-                      }
-                    >
+                    <p className="text-xs text-muted-foreground mb-1">Sin duplicados</p>
+                    <Badge variant="secondary" className="text-xs">
                       {settings.filterDuplicates ? (
-                        <span className="flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" /> Activado
-                        </span>
-                      ) : (
-                        "Desactivado"
-                      )}
+                        <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Activado</span>
+                      ) : "Desactivado"}
                     </Badge>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Menciones requeridas
-                    </p>
-                    <Badge variant="secondary" className="bg-[#C792EA]/10 text-[#C792EA]">
-                      {settings.requireMentions} menciones
+                    <p className="text-xs text-muted-foreground mb-1">Menciones</p>
+                    <Badge variant="secondary" className="text-xs">
+                      {settings.requireMentions} requeridas
                     </Badge>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      Cuentas excluidas
-                    </p>
-                    <Badge variant="secondary" className="bg-[#D2248F]/10 text-[#D2248F]">
+                    <p className="text-xs text-muted-foreground mb-1">Excluidas</p>
+                    <Badge variant="secondary" className="text-xs">
                       {settings.excludeAccounts.length || "Ninguna"}
                     </Badge>
                   </div>
@@ -701,11 +658,11 @@ https://sorteosweb.app
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.6 }}
             >
-              <h2 className="mb-4 text-lg font-semibold text-foreground flex items-center gap-2">
-                <Users className="w-5 h-5 text-muted-foreground" />
-                Lista de Participantes
+              <h2 className="mb-3 text-sm font-semibold text-foreground flex items-center gap-2">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                Participantes ({filteredParticipants.length})
               </h2>
               <ParticipantsList
                 participants={filteredParticipants}
@@ -716,7 +673,6 @@ https://sorteosweb.app
         )}
       </div>
 
-      {/* Share Animation Modal */}
       <ShareAnimationModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
@@ -726,6 +682,8 @@ https://sorteosweb.app
         accentColor={settings?.accentColor}
         isFreeGiveaway={!paymentRequired}
         backupWinners={backupWinnersList}
+        totalComments={allParticipants.length}
+        filteredCount={filteredParticipants.length}
       />
     </div>
   )

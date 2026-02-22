@@ -409,7 +409,7 @@ export default function FAQPage() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary to-[#9B44D8] p-8 md:p-12 text-center"
+            className="relative overflow-hidden rounded-3xl bg-primary p-8 md:p-12 text-center"
           >
             {/* Background decoration */}
             <div className="absolute inset-0 pointer-events-none">

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Check, Gift, Plus, Minus, Shield, Zap, Calculator } from "lucide-react"
+import { Check, Gift, Plus, Minus, Shield, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
@@ -10,48 +10,13 @@ const BASE_PRICE = 5000
 const MAX_PRICE = 10000
 
 const filters = [
-  {
-    id: "extraWinners",
-    label: "Multiples ganadores",
-    description: "Mas de 1 ganador por sorteo",
-    price: 1000,
-  },
-  {
-    id: "filterDuplicates",
-    label: "Filtrar duplicados",
-    description: "Elimina comentarios repetidos del mismo usuario",
-    price: 1000,
-  },
-  {
-    id: "requireMentions",
-    label: "Menciones minimas",
-    description: "Exige que los participantes mencionen amigos",
-    price: 1000,
-  },
-  {
-    id: "excludeAccounts",
-    label: "Excluir cuentas",
-    description: "Excluye cuentas especificas del sorteo",
-    price: 1000,
-  },
-  {
-    id: "minCommentLength",
-    label: "Largo minimo de comentario",
-    description: "Requiere un largo minimo en el comentario",
-    price: 1000,
-  },
-  {
-    id: "keywordFilter",
-    label: "Filtro por palabras clave",
-    description: "Solo participan quienes usen ciertas palabras o hashtags",
-    price: 1000,
-  },
-  {
-    id: "backupWinners",
-    label: "Ganadores suplentes",
-    description: "Selecciona suplentes en caso de que un ganador no reclame",
-    price: 1000,
-  },
+  { id: "extraWinners", label: "Multiples ganadores", description: "Mas de 1 ganador por sorteo", price: 1000 },
+  { id: "filterDuplicates", label: "Filtrar duplicados", description: "1 usuario = 1 participacion", price: 1000 },
+  { id: "requireMentions", label: "Menciones minimas", description: "Exige que mencionen amigos", price: 1000 },
+  { id: "excludeAccounts", label: "Excluir cuentas", description: "Excluye cuentas especificas", price: 1000 },
+  { id: "minCommentLength", label: "Largo minimo", description: "Requiere largo minimo en comentario", price: 1000 },
+  { id: "keywordFilter", label: "Filtro por palabras clave", description: "Solo quienes usen ciertas palabras", price: 1000 },
+  { id: "backupWinners", label: "Ganadores suplentes", description: "Suplentes de respaldo", price: 1000 },
 ]
 
 export function PricingSection() {
@@ -60,11 +25,8 @@ export function PricingSection() {
   const toggleFilter = (id: string) => {
     setActiveFilters((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
@@ -74,54 +36,39 @@ export function PricingSection() {
   const capped = subtotal > MAX_PRICE
 
   return (
-    <section id="pricing" className="py-24 lg:py-32 relative overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-accent/5 rounded-full blur-3xl" />
-      </div>
-
+    <section id="pricing" className="py-24 lg:py-32">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center max-w-3xl mx-auto mb-16"
+          className="text-center max-w-2xl mx-auto mb-12"
         >
-          <span className="inline-block px-4 py-2 rounded-full bg-[#C792EA]/20 text-[#C792EA] text-sm font-medium mb-4">
-            Precios Simples
-          </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
-            Paga solo por{" "}
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              lo que usas
-            </span>
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
+            Precios claros
           </h2>
-          <p className="mt-6 text-lg text-muted-foreground">
-            Sin suscripciones ni compromisos. Pagas por cada sorteo que realices,
-            y solo sumas lo que necesitas.
+          <p className="mt-4 text-lg text-muted-foreground">
+            Sin suscripciones. Pagas por sorteo, solo cuando lo necesitas.
           </p>
         </motion.div>
 
-        {/* Free tier banner */}
+        {/* Free tier */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="max-w-2xl mx-auto mb-8"
         >
-          <div className="relative rounded-2xl bg-gradient-to-r from-[#4ECDC4]/10 to-[#45B7D1]/10 border border-[#4ECDC4]/20 p-6 text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#4ECDC4]/20 text-[#4ECDC4] text-sm font-bold mb-3">
+          <div className="rounded-xl bg-primary/[0.04] border border-primary/10 p-5 text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-primary/10 text-primary text-sm font-medium mb-2">
               <Gift className="w-4 h-4" />
-              GRATIS
+              Sin costo
             </div>
-            <p className="text-foreground font-semibold text-lg">
-              Sorteos simples con menos de 500 comentarios son{" "}
-              <span className="text-[#4ECDC4]">completamente gratis</span>
+            <p className="text-foreground font-medium">
+              Sorteos simples con hasta 500 comentarios y 1 ganador
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              1 ganador, sin filtros adicionales. Ideal para sorteos pequenos.
+            <p className="text-sm text-muted-foreground mt-1">
+              Sin filtros adicionales. Ideal para sorteos de baja escala.
             </p>
           </div>
         </motion.div>
@@ -129,96 +76,74 @@ export function PricingSection() {
         {/* Pricing card */}
         <div className="max-w-2xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative rounded-3xl bg-card border border-border/50 shadow-xl overflow-hidden"
+            className="rounded-xl bg-card border border-border/50 shadow-sm overflow-hidden"
           >
-            {/* Card header */}
-            <div className="p-8 pb-0">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-[#9B44D8] to-accent flex items-center justify-center">
-                  <Gift className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">Precio por sorteo</h3>
-                  <p className="text-sm text-muted-foreground">Personaliza segun tus necesidades</p>
-                </div>
-              </div>
+            {/* Header */}
+            <div className="p-6 pb-4">
+              <h3 className="text-lg font-semibold text-foreground">Sorteo con filtros</h3>
+              <p className="text-sm text-muted-foreground">Selecciona las opciones que necesites</p>
             </div>
 
             {/* Base price */}
-            <div className="px-8 pt-6">
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-secondary/50">
+            <div className="px-6">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#4ECDC4]/10 flex items-center justify-center">
-                    <Check className="w-4 h-4 text-[#4ECDC4]" />
-                  </div>
+                  <Check className="w-5 h-5 text-primary" />
                   <div>
-                    <p className="font-medium text-foreground">Sorteo basico</p>
-                    <p className="text-xs text-muted-foreground">1 ganador, sin filtros adicionales</p>
+                    <p className="font-medium text-foreground text-sm">Sorteo base</p>
+                    <p className="text-xs text-muted-foreground">1 ganador, sin filtros</p>
                   </div>
                 </div>
-                <span className="text-lg font-bold text-foreground">
+                <span className="font-semibold text-foreground">
                   ${BASE_PRICE.toLocaleString("es-AR")}
                 </span>
               </div>
-              <div className="flex flex-wrap gap-2 mt-3">
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#4ECDC4]/10 text-[#4ECDC4] text-xs font-medium">
-                  <Check className="w-3 h-3" /> Logo personalizado incluido
+
+              <div className="flex gap-2 mt-3">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary/5 text-primary text-xs font-medium">
+                  <Check className="w-3 h-3" /> Logo incluido
                 </span>
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#4ECDC4]/10 text-[#4ECDC4] text-xs font-medium">
-                  <Check className="w-3 h-3" /> Color de acento incluido
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary/5 text-primary text-xs font-medium">
+                  <Check className="w-3 h-3" /> Color personalizado
                 </span>
               </div>
             </div>
 
-            {/* Optional filters */}
-            <div className="px-8 pt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Calculator className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm font-medium text-muted-foreground">
-                  Filtros opcionales (+$1.000 c/u)
-                </p>
-              </div>
-
-              <div className="space-y-3">
+            {/* Filters */}
+            <div className="px-6 pt-5">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                Filtros opcionales — $1.000 c/u
+              </p>
+              <div className="space-y-1.5">
                 {filters.map((filter) => {
                   const isActive = activeFilters.has(filter.id)
                   return (
                     <button
                       key={filter.id}
                       onClick={() => toggleFilter(filter.id)}
-                      className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all text-left ${
+                      className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all text-left ${
                         isActive
-                          ? "border-primary/50 bg-primary/5"
+                          ? "border-primary/20 bg-primary/[0.03]"
                           : "border-transparent bg-secondary/30 hover:bg-secondary/50"
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                            isActive
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted"
+                          className={`w-5 h-5 rounded flex items-center justify-center transition-all ${
+                            isActive ? "bg-primary text-primary-foreground" : "bg-muted"
                           }`}
                         >
-                          {isActive ? (
-                            <Minus className="w-3 h-3" />
-                          ) : (
-                            <Plus className="w-3 h-3" />
-                          )}
+                          {isActive ? <Minus className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
                         </div>
                         <div>
                           <p className="font-medium text-foreground text-sm">{filter.label}</p>
                           <p className="text-xs text-muted-foreground">{filter.description}</p>
                         </div>
                       </div>
-                      <span
-                        className={`text-sm font-semibold ${
-                          isActive ? "text-primary" : "text-muted-foreground"
-                        }`}
-                      >
+                      <span className={`text-sm font-medium ${isActive ? "text-primary" : "text-muted-foreground"}`}>
                         +$1.000
                       </span>
                     </button>
@@ -228,27 +153,27 @@ export function PricingSection() {
             </div>
 
             {/* Total */}
-            <div className="p-8">
-              <div className="border-t border-border/50 pt-6">
+            <div className="p-6">
+              <div className="border-t border-border/50 pt-5">
                 {capped && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
-                    className="mb-4 px-4 py-3 rounded-xl bg-[#4ECDC4]/10 border border-[#4ECDC4]/20"
+                    className="mb-4 px-4 py-3 rounded-lg bg-primary/[0.04] border border-primary/10"
                   >
-                    <p className="text-sm text-[#4ECDC4] font-medium">
-                      Tope maximo aplicado — no pagas mas de ${MAX_PRICE.toLocaleString("es-AR")} sin importar cuantos filtros uses.
+                    <p className="text-sm text-primary font-medium">
+                      Tope maximo aplicado — nunca pagas mas de ${MAX_PRICE.toLocaleString("es-AR")} por sorteo.
                     </p>
                   </motion.div>
                 )}
 
                 <div className="flex items-end justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Total por sorteo</p>
+                    <p className="text-sm text-muted-foreground mb-1">Total</p>
                     <div className="flex items-baseline gap-2">
                       <motion.span
                         key={total}
-                        initial={{ opacity: 0, y: -10 }}
+                        initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="text-4xl font-bold text-foreground"
                       >
@@ -257,14 +182,14 @@ export function PricingSection() {
                       <span className="text-muted-foreground">ARS</span>
                     </div>
                     {capped && (
-                      <p className="text-xs text-muted-foreground line-through mt-1">
+                      <p className="text-xs text-muted-foreground line-through mt-0.5">
                         ${subtotal.toLocaleString("es-AR")}
                       </p>
                     )}
                   </div>
                   <Link href="/sorteo/nuevo">
-                    <Button className="h-12 px-8 text-base font-medium rounded-xl bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90 transition-all hover:scale-[1.02]">
-                      Crear Sorteo
+                    <Button className="h-11 px-6 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium">
+                      Iniciar sorteo
                     </Button>
                   </Link>
                 </div>
@@ -278,19 +203,15 @@ export function PricingSection() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="mt-16 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground"
+          className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground"
         >
           <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-[#4ECDC4]" />
+            <Shield className="w-4 h-4 text-primary/60" />
             Pago seguro con Mercado Pago
           </div>
           <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-[#4ECDC4]" />
+            <Zap className="w-4 h-4 text-primary/60" />
             Sin suscripciones
-          </div>
-          <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-[#4ECDC4]" />
-            Soporte en espanol
           </div>
         </motion.div>
       </div>
