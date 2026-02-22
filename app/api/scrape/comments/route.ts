@@ -14,6 +14,22 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // B2: Sanitize shortcode — alphanumeric + _ - only, max 50 chars
+    if (!/^[\w-]{1,50}$/.test(shortcode)) {
+      return NextResponse.json(
+        { error: "shortcode invalido" },
+        { status: 400 },
+      )
+    }
+
+    // B2: Sanitize cursor — max 200 chars
+    if (cursor && cursor.length > 200) {
+      return NextResponse.json(
+        { error: "cursor invalido" },
+        { status: 400 },
+      )
+    }
+
     const result = await scrapeComments(shortcode, cursor)
     return NextResponse.json(result)
   } catch (error) {

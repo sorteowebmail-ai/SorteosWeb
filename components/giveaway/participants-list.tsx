@@ -91,7 +91,7 @@ export function ParticipantsList({
                     backgroundColor: isWinner
                       ? `${winnerColor}20`
                       : "rgba(0,0,0,0.05)",
-                    color: isWinner ? winnerColor : undefined,
+                    color: isWinner ? (winnerColor ?? undefined) : undefined,
                   }}
                 >
                   {participant.username.slice(0, 2).toUpperCase()}

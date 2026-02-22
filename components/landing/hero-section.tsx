@@ -58,7 +58,7 @@ export function HeroSection() {
             transition={{ delay: 0.15, duration: 0.5 }}
             className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto text-pretty"
           >
-            Ingresa la URL de tu publicacion, configura las reglas y selecciona ganadores con criptografia verificable. Sin registro. Sin credenciales.
+            Ingresá la URL de tu publicación, configurá las reglas y seleccioná ganadores con criptografía verificable. Sin registro. Sin credenciales.
           </motion.p>
 
           {/* URL Input */}
@@ -110,7 +110,7 @@ export function HeroSection() {
           >
             {[
               { icon: Lock, text: "Sin credenciales" },
-              { icon: ShieldCheck, text: "Criptografia verificable" },
+              { icon: ShieldCheck, text: "Criptografía verificable" },
               { icon: Zap, text: "Resultados inmediatos" },
               { icon: CheckCircle2, text: "Sin registro" },
             ].map((item) => (

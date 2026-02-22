@@ -81,10 +81,10 @@ export function TransparencyBlock({
             </div>
             <div>
               <h2 className="text-base font-semibold text-foreground">
-                Verificacion del sorteo
+                Verificación del sorteo
               </h2>
               <p className="text-xs text-muted-foreground">
-                Datos verificables del proceso de seleccion
+                Datos verificables del proceso de selección
               </p>
             </div>
           </div>
@@ -95,7 +95,7 @@ export function TransparencyBlock({
             className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
             <HelpCircle className="w-3.5 h-3.5" />
-            Metodo de seleccion
+            Método de selección
           </Button>
         </div>
 
@@ -136,7 +136,7 @@ export function TransparencyBlock({
                   {totalComments.toLocaleString()} analizados
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {filteredCount.toLocaleString()} validos
+                  {filteredCount.toLocaleString()} válidos
                 </p>
               </div>
             </div>
@@ -189,7 +189,7 @@ export function TransparencyBlock({
           <div className="mt-5 pt-5 border-t border-border/50 flex items-center justify-center gap-2">
             <Shield className="w-3.5 h-3.5 text-primary/60" />
             <span className="text-xs text-muted-foreground">
-              Seleccion mediante <span className="font-mono text-foreground/70">crypto.getRandomValues()</span> — algoritmo criptografico verificable
+              Selección mediante <span className="font-mono text-foreground/70">crypto.getRandomValues()</span> — algoritmo criptográfico verificable
             </span>
           </div>
         </div>

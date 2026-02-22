@@ -10,11 +10,11 @@ const BASE_PRICE = 5000
 const MAX_PRICE = 10000
 
 const filters = [
-  { id: "extraWinners", label: "Multiples ganadores", description: "Mas de 1 ganador por sorteo", price: 1000 },
-  { id: "filterDuplicates", label: "Filtrar duplicados", description: "1 usuario = 1 participacion", price: 1000 },
-  { id: "requireMentions", label: "Menciones minimas", description: "Exige que mencionen amigos", price: 1000 },
-  { id: "excludeAccounts", label: "Excluir cuentas", description: "Excluye cuentas especificas", price: 1000 },
-  { id: "minCommentLength", label: "Largo minimo", description: "Requiere largo minimo en comentario", price: 1000 },
+  { id: "extraWinners", label: "Múltiples ganadores", description: "Más de 1 ganador por sorteo", price: 1000 },
+  { id: "filterDuplicates", label: "Filtrar duplicados", description: "1 usuario = 1 participación", price: 1000 },
+  { id: "requireMentions", label: "Menciones mínimas", description: "Exige que mencionen amigos", price: 1000 },
+  { id: "excludeAccounts", label: "Excluir cuentas", description: "Excluye cuentas específicas", price: 1000 },
+  { id: "minCommentLength", label: "Largo mínimo", description: "Requiere largo mínimo en comentario", price: 1000 },
   { id: "keywordFilter", label: "Filtro por palabras clave", description: "Solo quienes usen ciertas palabras", price: 1000 },
   { id: "backupWinners", label: "Ganadores suplentes", description: "Suplentes de respaldo", price: 1000 },
 ]
@@ -48,7 +48,7 @@ export function PricingSection() {
             Precios claros
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Sin suscripciones. Pagas por sorteo, solo cuando lo necesitas.
+            Sin suscripciones. Pagás por sorteo, solo cuando lo necesitás.
           </p>
         </motion.div>
 
@@ -84,7 +84,7 @@ export function PricingSection() {
             {/* Header */}
             <div className="p-6 pb-4">
               <h3 className="text-lg font-semibold text-foreground">Sorteo con filtros</h3>
-              <p className="text-sm text-muted-foreground">Selecciona las opciones que necesites</p>
+              <p className="text-sm text-muted-foreground">Seleccioná las opciones que necesites</p>
             </div>
 
             {/* Base price */}
@@ -162,7 +162,7 @@ export function PricingSection() {
                     className="mb-4 px-4 py-3 rounded-lg bg-primary/[0.04] border border-primary/10"
                   >
                     <p className="text-sm text-primary font-medium">
-                      Tope maximo aplicado — nunca pagas mas de ${MAX_PRICE.toLocaleString("es-AR")} por sorteo.
+                      Tope máximo aplicado — nunca pagás más de ${MAX_PRICE.toLocaleString("es-AR")} por sorteo.
                     </p>
                   </motion.div>
                 )}

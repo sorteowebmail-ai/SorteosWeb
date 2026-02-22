@@ -6,8 +6,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const url = body.url as string
 
-    if (!url) {
+    if (!url || typeof url !== "string") {
       return NextResponse.json({ error: "URL es requerida" }, { status: 400 })
+    }
+
+    if (url.length > 500) {
+      return NextResponse.json({ error: "URL demasiado larga" }, { status: 400 })
+    }
+
+    if (!url.includes("instagram.com/")) {
+      return NextResponse.json(
+        { error: "Solo se aceptan URLs de Instagram" },
+        { status: 400 },
+      )
     }
 
     const shortcode = extractShortcode(url)

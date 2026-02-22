@@ -12,7 +12,7 @@ const footerLinks = {
   ],
   legal: [
     { label: "Privacidad", href: "/privacidad" },
-    { label: "Terminos de Uso", href: "/terminos" },
+    { label: "Términos de Uso", href: "/terminos" },
     { label: "Cookies", href: "/cookies" },
     { label: "Contacto", href: "/contacto" },
   ],
@@ -35,7 +35,7 @@ export function Footer() {
             </Link>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs leading-relaxed">
               Plataforma profesional para sorteos de Instagram.
-              Seleccion aleatoria verificable. Sin credenciales.
+              Selección aleatoria verificable. Sin credenciales.
             </p>
           </div>
 

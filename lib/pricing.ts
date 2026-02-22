@@ -77,7 +77,7 @@ export function getPriceBreakdown(settings: GiveawaySettings) {
   ]
 
   if (settings.numberOfWinners > 1) {
-    items.push({ label: `Multiples ganadores (${settings.numberOfWinners})`, price: FEATURE_COSTS.extraWinners })
+    items.push({ label: `Múltiples ganadores (${settings.numberOfWinners})`, price: FEATURE_COSTS.extraWinners })
   }
 
   if (settings.filterDuplicates) {
@@ -85,7 +85,7 @@ export function getPriceBreakdown(settings: GiveawaySettings) {
   }
 
   if (settings.requireMentions > 0) {
-    items.push({ label: `Menciones minimas (${settings.requireMentions})`, price: FEATURE_COSTS.requireMentions })
+    items.push({ label: `Menciones mínimas (${settings.requireMentions})`, price: FEATURE_COSTS.requireMentions })
   }
 
   if (settings.excludeAccounts.length > 0) {
@@ -93,7 +93,7 @@ export function getPriceBreakdown(settings: GiveawaySettings) {
   }
 
   if (settings.minCommentLength > 0) {
-    items.push({ label: `Largo minimo (${settings.minCommentLength} chars)`, price: FEATURE_COSTS.minCommentLength })
+    items.push({ label: `Largo mínimo (${settings.minCommentLength} chars)`, price: FEATURE_COSTS.minCommentLength })
   }
 
   if (settings.keywordFilter?.length > 0) {

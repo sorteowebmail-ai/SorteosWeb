@@ -270,7 +270,7 @@ async function scrapeWithPageHTML(
       // Instagram embeds media data in various formats
 
       // Method A: Look for require("ScheduledServerJS").handle calls with media data
-      const scheduledMatch = html.match(/"xdt_api__v1__media__shortcode__web_info":\{"items":\[(.*?)\]\}/s)
+      const scheduledMatch = html.match(/"xdt_api__v1__media__shortcode__web_info":\{"items":\[([\s\S]*?)\]\}/)
       if (scheduledMatch) {
         try {
           const item = JSON.parse(`{${scheduledMatch[0]}}`).xdt_api__v1__media__shortcode__web_info.items[0]

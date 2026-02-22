@@ -120,7 +120,7 @@ export default function LoginPage() {
                 <div>
                   <p className="font-medium text-foreground">Seguridad garantizada</p>
                   <p className="text-muted-foreground">
-                    Nunca pedimos tu contrasena. Solo leemos los comentarios de tus publicaciones.
+                    Nunca pedimos tu contrase\u00F1a. Solo leemos los comentarios de tus publicaciones.
                   </p>
                 </div>
               </div>
@@ -129,7 +129,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          Al continuar, aceptas los Terminos de Servicio y Politica de Privacidad de SorteosWeb.
+          Al continuar, acept\u00E1s los T\u00E9rminos de Servicio y Pol\u00EDtica de Privacidad de SorteosWeb.
         </p>
       </motion.div>
     </div>

@@ -23,11 +23,11 @@ export function CTASection() {
 
             <div className="relative z-10 max-w-2xl mx-auto text-center">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white text-balance">
-                Tu proximo sorteo, profesional y verificable
+                Tu próximo sorteo, profesional y verificable
               </h2>
 
               <p className="mt-5 text-lg text-white/70 max-w-lg mx-auto">
-                Seleccion aleatoria criptografica. Certificado con ID unico. Sin registro ni credenciales.
+                Selección aleatoria criptográfica. Certificado con ID único. Sin registro ni credenciales.
               </p>
 
               <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">

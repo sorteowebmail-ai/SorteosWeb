@@ -43,143 +43,143 @@ const faqs: FAQItem[] = [
   // Getting Started
   {
     category: "getting-started",
-    question: "Como hacer un sorteo en Instagram con SorteosWeb?",
+    question: "\u00BFC\u00F3mo hacer un sorteo en Instagram con SorteosWeb?",
     answer:
-      "Es muy sencillo: solo tienes que pegar el enlace de tu publicacion de Instagram, configurar las opciones del sorteo (numero de ganadores, filtros, etc.) y hacer clic en 'Sortear'. SorteosWeb se encarga de cargar los comentarios y seleccionar ganadores de forma aleatoria y transparente. No necesitas iniciar sesion ni compartir tus credenciales.",
+      "Es muy sencillo: solo ten\u00E9s que pegar el enlace de tu publicaci\u00F3n de Instagram, configurar las opciones del sorteo (n\u00FAmero de ganadores, filtros, etc.) y hacer clic en \u2018Sortear\u2019. SorteosWeb se encarga de cargar los comentarios y seleccionar ganadores de forma aleatoria y transparente. No necesit\u00E1s iniciar sesi\u00F3n ni compartir tus credenciales.",
   },
   {
     category: "getting-started",
-    question: "Necesito crear una cuenta para usar SorteosWeb?",
+    question: "\u00BFNecesito crear una cuenta para usar SorteosWeb?",
     answer:
-      "No, SorteosWeb esta disenado para ser lo mas simple posible. Puedes hacer sorteos sin necesidad de registrarte. Para funciones avanzadas como historial de sorteos y certificados personalizados, puedes crear una cuenta gratuita opcional.",
+      "No, SorteosWeb est\u00E1 dise\u00F1ado para ser lo m\u00E1s simple posible. Pod\u00E9s hacer sorteos sin necesidad de registrarte. Para funciones avanzadas como historial de sorteos y certificados personalizados, pod\u00E9s crear una cuenta gratuita opcional.",
   },
   {
     category: "getting-started",
-    question: "Cuanto tiempo tarda en cargar los comentarios?",
+    question: "\u00BFCu\u00E1nto tiempo tarda en cargar los comentarios?",
     answer:
-      "El tiempo depende de la cantidad de comentarios. Para publicaciones con menos de 500 comentarios, generalmente tarda unos segundos. Para sorteos mas grandes, puede tomar entre 30 segundos y 2 minutos. Veras una barra de progreso durante la carga.",
+      "El tiempo depende de la cantidad de comentarios. Para publicaciones con menos de 500 comentarios, generalmente tarda unos segundos. Para sorteos m\u00E1s grandes, puede tomar entre 30 segundos y 2 minutos. Vas a ver una barra de progreso durante la carga.",
   },
   {
     category: "getting-started",
-    question: "Puedo hacer un sorteo desde mi celular?",
+    question: "\u00BFPuedo hacer un sorteo desde mi celular?",
     answer:
-      "Si, SorteosWeb funciona perfectamente desde cualquier dispositivo. La plataforma esta optimizada para moviles, tablets y computadoras. No necesitas descargar ninguna aplicacion.",
+      "S\u00ED, SorteosWeb funciona perfectamente desde cualquier dispositivo. La plataforma est\u00E1 optimizada para m\u00F3viles, tablets y computadoras. No necesit\u00E1s descargar ninguna aplicaci\u00F3n.",
   },
 
   // Instagram
   {
     category: "instagram",
-    question: "Donde encuentro el enlace de mi publicacion de Instagram?",
+    question: "\u00BFD\u00F3nde encuentro el enlace de mi publicaci\u00F3n de Instagram?",
     answer:
-      "Abre tu publicacion en Instagram, toca los tres puntos (...) en la esquina superior derecha y selecciona 'Copiar enlace'. Tambien puedes ver el post en un navegador web y copiar la URL directamente de la barra de direcciones. El formato es: instagram.com/p/CODIGO o instagram.com/reel/CODIGO.",
+      "Abr\u00ED tu publicaci\u00F3n en Instagram, toc\u00E1 los tres puntos (\u2026) en la esquina superior derecha y seleccion\u00E1 \u2018Copiar enlace\u2019. Tambi\u00E9n pod\u00E9s ver el post en un navegador web y copiar la URL directamente de la barra de direcciones. El formato es: instagram.com/p/CODIGO o instagram.com/reel/CODIGO.",
   },
   {
     category: "instagram",
-    question: "Puedo hacer sorteos con publicaciones de cuentas privadas?",
+    question: "\u00BFPuedo hacer sorteos con publicaciones de cuentas privadas?",
     answer:
-      "No, solo podemos acceder a publicaciones de cuentas publicas. Si tu cuenta es privada, deberas cambiarla a publica temporalmente para realizar el sorteo, o al menos hacer publica la publicacion especifica.",
+      "No, solo podemos acceder a publicaciones de cuentas p\u00FAblicas. Si tu cuenta es privada, deber\u00E1s cambiarla a p\u00FAblica temporalmente para realizar el sorteo, o al menos hacer p\u00FAblica la publicaci\u00F3n espec\u00EDfica.",
   },
   {
     category: "instagram",
-    question: "Se puede verificar si los participantes siguen mi cuenta?",
+    question: "\u00BFSe puede verificar si los participantes siguen mi cuenta?",
     answer:
-      "Instagram no permite acceder a la lista de seguidores de otras cuentas por politicas de privacidad. Puedes establecer 'seguir la cuenta' como requisito del sorteo, pero la verificacion debe hacerse manualmente para el ganador antes de entregar el premio.",
+      "Instagram no permite acceder a la lista de seguidores de otras cuentas por pol\u00EDticas de privacidad. Pod\u00E9s establecer \u2018seguir la cuenta\u2019 como requisito del sorteo, pero la verificaci\u00F3n debe hacerse manualmente para el ganador antes de entregar el premio.",
   },
   {
     category: "instagram",
-    question: "Funciona con Reels e historias?",
+    question: "\u00BFFunciona con Reels e historias?",
     answer:
-      "Si, funcionamos con publicaciones del feed y Reels. Actualmente no soportamos historias de Instagram ya que los comentarios funcionan de forma diferente y desaparecen despues de 24 horas.",
+      "S\u00ED, funcionamos con publicaciones del feed y Reels. Actualmente no soportamos historias de Instagram ya que los comentarios funcionan de forma diferente y desaparecen despu\u00E9s de 24 horas.",
   },
   {
     category: "instagram",
-    question: "Puedo sortear multiples publicaciones a la vez?",
+    question: "\u00BFPuedo sortear m\u00FAltiples publicaciones a la vez?",
     answer:
-      "Por ahora, cada sorteo se realiza con una sola publicacion. Si necesitas incluir participantes de varias publicaciones, te recomendamos hacer sorteos separados o usar nuestro plan Pro que incluye la funcion de multiples posts (proximamente).",
+      "Por ahora, cada sorteo se realiza con una sola publicaci\u00F3n. Si necesit\u00E1s incluir participantes de varias publicaciones, te recomendamos hacer sorteos separados o usar nuestro plan Pro que incluye la funci\u00F3n de m\u00FAltiples posts (pr\u00F3ximamente).",
   },
 
   // Features
   {
     category: "features",
-    question: "Que filtros puedo aplicar a los participantes?",
+    question: "\u00BFQu\u00E9 filtros puedo aplicar a los participantes?",
     answer:
-      "SorteosWeb ofrece filtros avanzados: eliminar comentarios duplicados del mismo usuario, requerir un numero minimo de menciones (@amigos), excluir cuentas especificas, establecer longitud minima de comentario, y filtrar por palabras clave. Puedes combinar multiples filtros segun las reglas de tu sorteo.",
+      "SorteosWeb ofrece filtros avanzados: eliminar comentarios duplicados del mismo usuario, requerir un n\u00FAmero m\u00EDnimo de menciones (@amigos), excluir cuentas espec\u00EDficas, establecer longitud m\u00EDnima de comentario, y filtrar por palabras clave. Pod\u00E9s combinar m\u00FAltiples filtros seg\u00FAn las reglas de tu sorteo.",
   },
   {
     category: "features",
-    question: "Puedo elegir varios ganadores y suplentes?",
+    question: "\u00BFPuedo elegir varios ganadores y suplentes?",
     answer:
-      "Si, puedes configurar el numero de ganadores que desees (1, 2, 3 o mas). Tambien puedes establecer ganadores suplentes en caso de que algun ganador principal no reclame su premio o no cumpla con los requisitos.",
+      "S\u00ED, pod\u00E9s configurar el n\u00FAmero de ganadores que quieras (1, 2, 3 o m\u00E1s). Tambi\u00E9n pod\u00E9s establecer ganadores suplentes en caso de que alg\u00FAn ganador principal no reclame su premio o no cumpla con los requisitos.",
   },
   {
     category: "features",
-    question: "Como comparto los resultados del sorteo?",
+    question: "\u00BFC\u00F3mo comparto los resultados del sorteo?",
     answer:
-      "SorteosWeb genera multiples formatos para compartir: certificado oficial en imagen, animaciones personalizadas para historias de Instagram (formato 9:16) y posts (formato 1:1), y la opcion de grabar la pantalla durante la seleccion del ganador. Todo disenado para generar confianza con tu audiencia.",
+      "SorteosWeb genera m\u00FAltiples formatos para compartir: certificado oficial en imagen, dise\u00F1os profesionales para historias de Instagram (formato 9:16) y posts (formato 1:1), y la opci\u00F3n de descargar video animado durante la selecci\u00F3n del ganador. Todo dise\u00F1ado para generar confianza con tu audiencia.",
   },
   {
     category: "features",
-    question: "Las animaciones de ganador se pueden personalizar?",
+    question: "\u00BFLos dise\u00F1os de ganador se pueden personalizar?",
     answer:
-      "Si, ofrecemos varias plantillas de animacion con diferentes estilos (confetti, elegante, minimalista, festivo). Puedes elegir colores, agregar tu logo (plan Pro), y seleccionar el formato ideal para historias o feed de Instagram.",
+      "S\u00ED, ofrecemos varias plantillas con diferentes estilos (minimal, elegante, corporativo). Pod\u00E9s elegir colores, agregar tu logo, y seleccionar el formato ideal para historias o feed de Instagram.",
   },
   {
     category: "features",
-    question: "Se genera algun certificado o comprobante?",
+    question: "\u00BFSe genera alg\u00FAn certificado o comprobante?",
     answer:
-      "Si, generamos un certificado digital que incluye: fecha y hora del sorteo, enlace de la publicacion, configuracion utilizada, total de participantes, ganadores seleccionados y un codigo unico de verificacion. Esto aporta transparencia y credibilidad a tu sorteo.",
+      "S\u00ED, generamos un certificado digital que incluye: fecha y hora del sorteo, enlace de la publicaci\u00F3n, configuraci\u00F3n utilizada, total de participantes, ganadores seleccionados y un c\u00F3digo \u00FAnico de verificaci\u00F3n. Esto aporta transparencia y credibilidad a tu sorteo.",
   },
 
   // Pricing
   {
     category: "pricing",
-    question: "Es gratis usar SorteosWeb?",
+    question: "\u00BFEs gratis usar SorteosWeb?",
     answer:
-      "Si, ofrecemos un plan gratuito que permite sorteos en publicaciones de hasta 500 comentarios. Para sorteos mas grandes o funciones premium, ofrecemos planes accesibles de pago unico (sin suscripciones).",
+      "S\u00ED, ofrecemos un plan gratuito que permite sorteos en publicaciones de hasta 500 comentarios. Para sorteos m\u00E1s grandes o funciones premium, ofrecemos planes accesibles de pago \u00FAnico (sin suscripciones).",
   },
   {
     category: "pricing",
-    question: "Como funcionan los pagos?",
+    question: "\u00BFC\u00F3mo funcionan los pagos?",
     answer:
-      "Los pagos son por sorteo individual, sin suscripciones ni cargos mensuales. Usamos Stripe y Mercado Pago, plataformas 100% seguras. No almacenamos datos de tarjetas. Pagas solo cuando necesitas realizar un sorteo que excede el limite gratuito.",
+      "Los pagos son por sorteo individual, sin suscripciones ni cargos mensuales. Usamos Mercado Pago, una plataforma 100% segura. No almacenamos datos de tarjetas. Pag\u00E1s solo cuando necesit\u00E1s realizar un sorteo que excede el l\u00EDmite gratuito.",
   },
   {
     category: "pricing",
-    question: "Que pasa si pago y hay un error?",
+    question: "\u00BFQu\u00E9 pasa si pago y hay un error?",
     answer:
-      "Tu sorteo queda guardado automaticamente. Si el pago fue exitoso y hubo algun error tecnico, puedes acceder a 'Mis Sorteos' y retomar donde lo dejaste. Si tienes algun problema, nuestro soporte te ayudara en menos de 24 horas.",
+      "Tu sorteo queda guardado autom\u00E1ticamente. Si el pago fue exitoso y hubo alg\u00FAn error t\u00E9cnico, pod\u00E9s acceder a \u2018Mis Sorteos\u2019 y retomar donde lo dejaste. Si ten\u00E9s alg\u00FAn problema, nuestro soporte te va a ayudar en menos de 24 horas.",
   },
   {
     category: "pricing",
-    question: "Puedo obtener factura de mi compra?",
+    question: "\u00BFPuedo obtener factura de mi compra?",
     answer:
-      "Si, enviamos factura automaticamente al correo registrado. Si necesitas una factura con datos fiscales especificos, contactanos a soporte@sorteosweb.app con los datos de facturacion.",
+      "S\u00ED, enviamos factura autom\u00E1ticamente al correo registrado. Si necesit\u00E1s una factura con datos fiscales espec\u00EDficos, contactanos a contacto@sorteosweb.com.ar con los datos de facturaci\u00F3n.",
   },
 
   // Security
   {
     category: "security",
-    question: "Es seguro usar SorteosWeb?",
+    question: "\u00BFEs seguro usar SorteosWeb?",
     answer:
-      "Absolutamente. Nunca pedimos tu contrasena de Instagram ni acceso a tu cuenta. Solo leemos los comentarios publicos de la publicacion que nos indicas. Usamos conexiones encriptadas (HTTPS) y no almacenamos informacion sensible.",
+      "Absolutamente. Nunca pedimos tu contrase\u00F1a de Instagram ni acceso a tu cuenta. Solo leemos los comentarios p\u00FAblicos de la publicaci\u00F3n que nos indic\u00E1s. Usamos conexiones encriptadas (HTTPS) y no almacenamos informaci\u00F3n sensible.",
   },
   {
     category: "security",
-    question: "Como garantizan que el sorteo es aleatorio?",
+    question: "\u00BFC\u00F3mo garantizan que el sorteo es aleatorio?",
     answer:
-      "Utilizamos algoritmos criptograficos de generacion de numeros aleatorios (CSPRNG) que son imposibles de predecir o manipular. Ademas, mostramos la animacion de seleccion en tiempo real para mayor transparencia.",
+      "Utilizamos algoritmos criptogr\u00E1ficos de generaci\u00F3n de n\u00FAmeros aleatorios (CSPRNG) que son imposibles de predecir o manipular. Adem\u00E1s, mostramos la animaci\u00F3n de selecci\u00F3n en tiempo real para mayor transparencia.",
   },
   {
     category: "security",
-    question: "Los datos de los participantes quedan guardados?",
+    question: "\u00BFLos datos de los participantes quedan guardados?",
     answer:
-      "Los datos de participantes solo se procesan durante el sorteo y se eliminan automaticamente despues. No vendemos ni compartimos informacion con terceros. Solo guardamos el resultado final si decides crear un certificado.",
+      "Los datos de participantes solo se procesan durante el sorteo y se eliminan autom\u00E1ticamente despu\u00E9s. No vendemos ni compartimos informaci\u00F3n con terceros. Solo guardamos el resultado final si decid\u00EDs crear un certificado.",
   },
   {
     category: "security",
-    question: "Que pasa con mi informacion de pago?",
+    question: "\u00BFQu\u00E9 pasa con mi informaci\u00F3n de pago?",
     answer:
-      "No tenemos acceso a los datos de tu tarjeta. Los pagos son procesados directamente por Stripe o Mercado Pago, que cuentan con certificacion PCI-DSS nivel 1, el estandar mas alto de seguridad en pagos.",
+      "No tenemos acceso a los datos de tu tarjeta. Los pagos son procesados directamente por Mercado Pago, que cuenta con certificaci\u00F3n PCI-DSS nivel 1, el est\u00E1ndar m\u00E1s alto de seguridad en pagos.",
   },
 ];
 
@@ -350,7 +350,7 @@ export default function FAQPage() {
                 No encontramos resultados
               </h3>
               <p className="text-muted-foreground mb-6">
-                Intenta con otras palabras o revisa las categorias
+                Intent\u00E1 con otras palabras o revis\u00E1 las categor\u00EDas
               </p>
               <Button
                 variant="outline"
@@ -387,7 +387,7 @@ export default function FAQPage() {
               { value: "24h", label: "Tiempo de respuesta", icon: MessageCircle },
               { value: "99.9%", label: "Disponibilidad", icon: Zap },
               { value: "50k+", label: "Sorteos realizados", icon: Gift },
-              { value: "4.9/5", label: "Satisfaccion", icon: Users },
+              { value: "4.9/5", label: "Satisfacci\u00F3n", icon: Users },
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -422,10 +422,10 @@ export default function FAQPage() {
                 <MessageCircle className="w-8 h-8 text-white" />
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-                No encontraste tu respuesta?
+                \u00BFNo encontraste tu respuesta?
               </h2>
               <p className="text-white/80 max-w-lg mx-auto mb-8">
-                Nuestro equipo de soporte esta listo para ayudarte. Respondemos
+                Nuestro equipo de soporte est\u00E1 listo para ayudarte. Respondemos
                 todas las consultas en menos de 24 horas.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

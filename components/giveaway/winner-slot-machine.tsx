@@ -192,10 +192,10 @@ export function WinnerSlotMachine({
             </motion.div>
 
             <h3 className="text-lg font-semibold text-white mb-2">
-              Preparando seleccion
+              Preparando selección
             </h3>
             <p className="text-white/35 text-sm mb-8">
-              Algoritmo criptografico en ejecucion
+              Algoritmo criptográfico en ejecución
             </p>
 
             {/* Progress bar */}
@@ -237,7 +237,7 @@ export function WinnerSlotMachine({
             Procesando participantes
           </h3>
           <p className="text-sm text-muted-foreground mb-8">
-            {participants.length.toLocaleString()} participantes validos
+            {participants.length.toLocaleString()} participantes válidos
           </p>
 
           <div className="relative h-64 w-full overflow-hidden rounded-xl border border-border/50 bg-card">
@@ -310,7 +310,7 @@ export function WinnerSlotMachine({
           <div className="mb-6">
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/5 text-primary text-sm font-medium border border-primary/10">
               <Trophy className="w-3.5 h-3.5" />
-              Posicion {currentWinnerIndex + 1} de {numberOfWinners}
+              Posición {currentWinnerIndex + 1} de {numberOfWinners}
             </span>
           </div>
 
@@ -409,7 +409,7 @@ export function WinnerSlotMachine({
             transition={{ delay: 0.2, duration: 0.5 }}
             className="text-2xl font-bold text-foreground mb-2"
           >
-            Seleccion completada
+            Selección completada
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -437,7 +437,7 @@ export function WinnerSlotMachine({
                       @{winner.username}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Posicion #{index + 1}
+                      Posición #{index + 1}
                     </p>
                   </div>
                 </div>

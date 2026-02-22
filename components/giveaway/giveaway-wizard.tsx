@@ -52,7 +52,7 @@ interface PostInfo {
 }
 
 const steps = [
-  { id: 1, name: "Publicacion", icon: Instagram },
+  { id: 1, name: "Publicación", icon: Instagram },
   { id: 2, name: "Reglas", icon: Settings },
   { id: 3, name: "Ejecutar", icon: Play },
 ]
@@ -129,14 +129,14 @@ export function GiveawayWizard() {
       const data = await res.json()
 
       if (!res.ok) {
-        setVerifyError(data.error || "Error al verificar la publicacion")
+        setVerifyError(data.error || "Error al verificar la publicación")
         return
       }
 
       setPostInfo(data.post)
       setSettings((prev) => ({ ...prev, postUrl }))
     } catch {
-      setVerifyError("Error de conexion. Intenta de nuevo.")
+      setVerifyError("Error de conexión. Intenta de nuevo.")
     } finally {
       setVerifying(false)
     }
@@ -324,7 +324,7 @@ export function GiveawayWizard() {
                         <Instagram className="w-7 h-7 text-primary" />
                       </div>
                       <h2 className="text-2xl font-bold text-foreground">
-                        URL de la publicacion
+                        URL de la publicación
                       </h2>
                       <p className="mt-2 text-muted-foreground text-sm">
                         Posts, reels y carruseles de Instagram
@@ -381,7 +381,7 @@ export function GiveawayWizard() {
                           className="text-sm text-destructive flex items-center gap-2"
                         >
                           <AlertCircle className="w-4 h-4" />
-                          URL de Instagram no valida
+                          URL de Instagram no válida
                         </motion.p>
                       )}
 
@@ -430,7 +430,7 @@ export function GiveawayWizard() {
                         >
                           <div className="flex items-center gap-2 text-sm text-primary font-medium">
                             <Check className="w-4 h-4" />
-                            Publicacion verificada
+                            Publicación verificada
                           </div>
                           <div className="flex gap-4">
                             {postInfo.displayUrl && (
@@ -445,7 +445,7 @@ export function GiveawayWizard() {
                                 @{postInfo.ownerUsername}
                               </p>
                               <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                {postInfo.caption?.slice(0, 120) || "Sin descripcion"}
+                                {postInfo.caption?.slice(0, 120) || "Sin descripción"}
                                 {(postInfo.caption?.length || 0) > 120 ? "..." : ""}
                               </p>
                               <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
@@ -468,14 +468,14 @@ export function GiveawayWizard() {
                     {!postInfo && !verifying && (
                       <div className="max-w-lg mx-auto p-5 rounded-xl bg-secondary/30 border border-border/50">
                         <h3 className="font-medium text-foreground text-sm mb-3">
-                          Como obtener la URL
+                          Cómo obtener la URL
                         </h3>
                         <ol className="space-y-2 text-sm text-muted-foreground">
                           <li className="flex items-start gap-3">
                             <span className="w-5 h-5 rounded bg-primary/8 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">
                               1
                             </span>
-                            Abre la publicacion en Instagram
+                            Abre la publicación en Instagram
                           </li>
                           <li className="flex items-start gap-3">
                             <span className="w-5 h-5 rounded bg-primary/8 text-primary flex items-center justify-center text-xs font-medium flex-shrink-0">
@@ -506,7 +506,7 @@ export function GiveawayWizard() {
                         Reglas del sorteo
                       </h2>
                       <p className="mt-2 text-muted-foreground text-sm">
-                        Define los criterios de participacion
+                        Define los criterios de participación
                       </p>
                     </div>
 
@@ -544,7 +544,7 @@ export function GiveawayWizard() {
                             <MessageCircle className="w-4 h-4 text-primary" />
                           </div>
                           <Label className="font-medium text-foreground text-sm">
-                            Menciones minimas
+                            Menciones mínimas
                           </Label>
                         </div>
                         <Input
@@ -569,7 +569,7 @@ export function GiveawayWizard() {
                             <FileText className="w-4 h-4 text-primary" />
                           </div>
                           <Label className="font-medium text-foreground text-sm">
-                            Caracteres minimos
+                            Caracteres mínimos
                           </Label>
                         </div>
                         <Input
@@ -599,7 +599,7 @@ export function GiveawayWizard() {
                                 Sin duplicados
                               </Label>
                               <p className="text-xs text-muted-foreground">
-                                1 usuario = 1 participacion
+                                1 usuario = 1 participación
                               </p>
                             </div>
                           </div>
@@ -740,7 +740,7 @@ export function GiveawayWizard() {
                     {/* Personalization section */}
                     <div className="pt-2">
                       <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                        Personalizacion
+                        Personalización
                       </h3>
                       <div className="grid sm:grid-cols-2 gap-3">
                         {/* Logo upload */}
@@ -882,10 +882,10 @@ export function GiveawayWizard() {
                         <Shield className="w-7 h-7 text-primary" />
                       </div>
                       <h2 className="text-2xl font-bold text-foreground">
-                        Configuracion validada
+                        Configuración validada
                       </h2>
                       <p className="mt-2 text-muted-foreground text-sm">
-                        Revisa los parametros antes de ejecutar
+                        Revisa los parámetros antes de ejecutar
                       </p>
                     </div>
 
@@ -920,7 +920,7 @@ export function GiveawayWizard() {
                       <div className="p-3 rounded-lg bg-secondary/30 border border-border/50 flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Sin duplicados</span>
                         <Badge variant="secondary" className="text-xs">
-                          {settings.filterDuplicates ? "Si" : "No"}
+                          {settings.filterDuplicates ? "Sí" : "No"}
                         </Badge>
                       </div>
                       {settings.requireMentions > 0 && (
@@ -937,7 +937,7 @@ export function GiveawayWizard() {
                       )}
                       {settings.minCommentLength > 0 && (
                         <div className="p-3 rounded-lg bg-secondary/30 border border-border/50 flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Caracteres minimos</span>
+                          <span className="text-sm text-muted-foreground">Caracteres mínimos</span>
                           <Badge variant="secondary" className="text-xs">{settings.minCommentLength}</Badge>
                         </div>
                       )}
@@ -976,11 +976,11 @@ export function GiveawayWizard() {
                         </p>
                       </div>
                       <p className="text-xs text-muted-foreground text-center">
-                        Se procesaran {postInfo?.commentCount.toLocaleString() || 0} comentarios
-                        y se seleccionaran{" "}
+                        Se procesarán {postInfo?.commentCount.toLocaleString() || 0} comentarios
+                        y se seleccionarán{" "}
                         <strong>{settings.numberOfWinners}</strong> ganador
                         {settings.numberOfWinners > 1 ? "es" : ""}{settings.backupWinners > 0 ? ` + ${settings.backupWinners} suplente${settings.backupWinners > 1 ? "s" : ""}` : ""} mediante
-                        algoritmo criptografico verificable.
+                        algoritmo criptográfico verificable.
                       </p>
                     </div>
 
@@ -1042,7 +1042,7 @@ export function GiveawayWizard() {
                     className="gap-2 h-11 px-5 rounded-lg border-border/50 bg-transparent"
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    Atras
+                    Atrás
                   </Button>
 
                   {currentStep < 3 ? (
@@ -1074,7 +1074,7 @@ export function GiveawayWizard() {
                         )}
                       </Button>
                       <p className="text-xs text-muted-foreground mt-2 max-w-[260px] ml-auto">
-                        Seleccion mediante algoritmo aleatorio verificable
+                        Selección mediante algoritmo aleatorio verificable
                       </p>
                     </div>
                   )}

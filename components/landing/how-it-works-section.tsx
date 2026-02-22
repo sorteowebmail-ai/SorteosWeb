@@ -8,25 +8,25 @@ const steps = [
     number: "1",
     icon: Link2,
     title: "Ingresa la URL",
-    description: "Pega la URL del post, reel o carrusel de Instagram.",
+    description: "Pegá la URL del post, reel o carrusel de Instagram.",
   },
   {
     number: "2",
     icon: Settings,
-    title: "Configura las reglas",
-    description: "Define ganadores, filtros, menciones y criterios de participacion.",
+    title: "Configurá las reglas",
+    description: "Definí ganadores, filtros, menciones y criterios de participación.",
   },
   {
     number: "3",
     icon: Play,
-    title: "Ejecuta el sorteo",
-    description: "El sistema selecciona ganadores con algoritmo criptografico verificable.",
+    title: "Ejecutá el sorteo",
+    description: "El sistema selecciona ganadores con algoritmo criptográfico verificable.",
   },
   {
     number: "4",
     icon: Trophy,
-    title: "Comparte resultados",
-    description: "Descarga el certificado o genera una imagen para tus redes.",
+    title: "Compartí resultados",
+    description: "Descargá el certificado o generá una imagen para tus redes.",
   },
 ];
 

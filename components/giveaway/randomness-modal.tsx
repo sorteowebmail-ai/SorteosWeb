@@ -36,7 +36,7 @@ export function RandomnessModal({ isOpen, onClose }: RandomnessModalProps) {
                 <Shield className="w-4 h-4 text-primary" />
               </div>
               <h2 className="text-base font-semibold text-foreground">
-                Metodo de seleccion aleatoria
+                Método de selección aleatoria
               </h2>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="rounded-lg">
@@ -47,8 +47,8 @@ export function RandomnessModal({ isOpen, onClose }: RandomnessModalProps) {
           {/* Content */}
           <div className="p-6 space-y-6">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              SorteosWeb utiliza un algoritmo criptografico para garantizar
-              que cada seleccion sea imparcial y no pueda ser manipulada.
+              SorteosWeb utiliza un algoritmo criptográfico para garantizar
+              que cada selección sea imparcial y no pueda ser manipulada.
             </p>
 
             <div className="space-y-4">
@@ -58,12 +58,12 @@ export function RandomnessModal({ isOpen, onClose }: RandomnessModalProps) {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground mb-1">
-                    Criptograficamente seguro
+                    Criptográficamente seguro
                   </p>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Utilizamos <code className="text-xs font-mono bg-secondary px-1 py-0.5 rounded">crypto.getRandomValues()</code>,
                     la misma API que los navegadores usan para generar claves
-                    de encriptacion. Produce valores imposibles de predecir.
+                    de encriptación. Produce valores imposibles de predecir.
                   </p>
                 </div>
               </div>
@@ -90,11 +90,11 @@ export function RandomnessModal({ isOpen, onClose }: RandomnessModalProps) {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground mb-1">
-                    Sin intervencion humana
+                    Sin intervención humana
                   </p>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Una vez que se ejecuta el sorteo, nadie puede influir en el
-                    resultado. La seleccion ocurre en tu navegador, no en
+                    resultado. La selección ocurre en tu navegador, no en
                     nuestros servidores.
                   </p>
                 </div>
@@ -103,9 +103,9 @@ export function RandomnessModal({ isOpen, onClose }: RandomnessModalProps) {
 
             <div className="p-4 rounded-lg bg-secondary/50 border border-border/50">
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Cada sorteo genera un ID unico que funciona como certificado
-                de verificacion. Este identificador puede usarse como referencia
-                para confirmar que la seleccion se realizo con SorteosWeb.
+                Cada sorteo genera un ID único que funciona como certificado
+                de verificación. Este identificador puede usarse como referencia
+                para confirmar que la selección se realizó con SorteosWeb.
               </p>
             </div>
           </div>

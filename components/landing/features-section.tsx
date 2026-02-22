@@ -13,25 +13,25 @@ import {
 const features = [
   {
     icon: Zap,
-    title: "Rapido y directo",
+    title: "Rápido y directo",
     description:
-      "Ingresa la URL, configura reglas y obtene resultados. Sin registro, sin login, sin esperas.",
+      "Ingresá la URL, configurá reglas y obtené resultados. Sin registro, sin login, sin esperas.",
   },
   {
     icon: Filter,
     title: "Filtros avanzados",
     description:
-      "Elimina duplicados, exige menciones, filtra por palabras clave o excluye cuentas especificas.",
+      "Eliminá duplicados, exigí menciones, filtrá por palabras clave o excluí cuentas específicas.",
   },
   {
     icon: Shuffle,
-    title: "Seleccion aleatoria verificable",
+    title: "Selección aleatoria verificable",
     description:
-      "Algoritmo criptografico (crypto.getRandomValues) que garantiza una seleccion justa y demostrable.",
+      "Algoritmo criptográfico (crypto.getRandomValues) que garantiza una selección justa y demostrable.",
   },
   {
     icon: Users,
-    title: "Multiples ganadores y suplentes",
+    title: "Múltiples ganadores y suplentes",
     description:
       "Hasta 20 ganadores principales con suplentes de respaldo en caso de que alguien no reclame.",
   },
@@ -39,13 +39,13 @@ const features = [
     icon: Download,
     title: "Certificado verificable",
     description:
-      "Genera un certificado con ID unico y crea imagenes listas para compartir en tus redes.",
+      "Genera un certificado con ID único y crea imágenes listas para compartir en tus redes.",
   },
   {
     icon: Shield,
     title: "Privacidad primero",
     description:
-      "No pedimos tu contrasena de Instagram. No guardamos datos personales. Tu sorteo, tu control.",
+      "No pedimos tu contraseña de Instagram. No guardamos datos personales. Tu sorteo, tu control.",
   },
 ];
 

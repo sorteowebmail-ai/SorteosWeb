@@ -15,29 +15,29 @@ const testimonials = [
     initial: "C",
     role: "Fundadora",
     industry: "E-commerce",
-    text: "Sorteo con 3.000 comentarios resuelto en menos de 2 minutos. El certificado de verificacion le da seriedad real frente a los seguidores.",
+    text: "Sorteo con 3.000 comentarios resuelto en menos de 2 minutos. El certificado de verificación le da seriedad real frente a los seguidores.",
     rating: 5,
     comments: 3200,
     executionTime: "1m 47s",
     date: "Ene 2026",
   },
   {
-    name: "Matias R.",
+    name: "Matías R.",
     initial: "M",
     role: "Content creator",
     industry: "Streaming",
-    text: "Lo uso en vivo durante transmisiones. Rapido, transparente y sin pedir contraseña de Instagram. Mis viewers confian en los resultados.",
+    text: "Lo uso en vivo durante transmisiones. Rápido, transparente y sin pedir contraseña de Instagram. Mis viewers confían en los resultados.",
     rating: 5,
     comments: 8500,
     executionTime: "3m 12s",
     date: "Dic 2025",
   },
   {
-    name: "Lucia G.",
+    name: "Lucía G.",
     initial: "L",
     role: "Social media manager",
-    industry: "Cosmetica",
-    text: "Los filtros de menciones y duplicados nos ahorraron horas de revision manual. Procesamos mas de 12.000 comentarios sin problemas.",
+    industry: "Cosmética",
+    text: "Los filtros de menciones y duplicados nos ahorraron horas de revisión manual. Procesamos más de 12.000 comentarios sin problemas.",
     rating: 5,
     comments: 12400,
     executionTime: "4m 33s",
@@ -64,7 +64,7 @@ export function TestimonialsSection() {
           className="text-center max-w-2xl mx-auto mb-16"
         >
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
-            Marcas y creadores que confian en SorteosWeb
+            Marcas y creadores que confían en SorteosWeb
           </h2>
           <p className="mt-4 text-muted-foreground text-sm">
             Resultados reales de sorteos realizados en la plataforma

@@ -33,7 +33,7 @@ import { ParticipantsList } from "./participants-list"
 import { ShareAnimationModal } from "./share-animation-modal"
 import { TransparencyBlock } from "./transparency-block"
 import { filterParticipants } from "@/lib/giveaway-store"
-import { calculateGiveawayPrice } from "@/lib/pricing"
+import { calculateGiveawayPrice, isFreeGiveaway as checkIsFree } from "@/lib/pricing"
 import type { Participant, GiveawaySettings } from "@/lib/types"
 
 export function GiveawayResultView() {
@@ -56,45 +56,42 @@ export function GiveawayResultView() {
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "waiting" | "creating" | "verifying" | "approved" | "failed">("idle")
   const [showPaywall, setShowPaywall] = useState(false)
   const [price, setPrice] = useState(0)
+  const [isGiveawayFree, setIsGiveawayFree] = useState(false)
 
-  // Check payment on load
+  // Check payment on load — server-verified, no sessionStorage trust
   useEffect(() => {
-    const status = searchParams.get("status")
-    const paymentId = searchParams.get("payment_id") || searchParams.get("collection_id")
+    if (!settings || allParticipants.length === 0) return
 
-    const isFree = JSON.parse(sessionStorage.getItem("giveawayIsFree") || "false")
+    // Compute free status from actual settings + participant count
+    const isFree = checkIsFree(settings, allParticipants.length)
+    setIsGiveawayFree(isFree)
+
     if (isFree) {
       setPaymentRequired(false)
       setPaymentStatus("approved")
       return
     }
 
-    if (sessionStorage.getItem("giveawayPaid") === "true") {
-      setPaymentRequired(false)
-      setPaymentStatus("approved")
-      return
-    }
+    // Not free — require server-verified payment
+    const status = searchParams.get("status")
+    const paymentId = searchParams.get("payment_id") || searchParams.get("collection_id")
+    const quoteId = searchParams.get("quote_id")
 
-    if (status === "approved" && paymentId) {
+    if (status === "approved" && paymentId && quoteId) {
       setPaymentStatus("verifying")
-      fetch(`/api/payment/verify?payment_id=${paymentId}`)
+      fetch(`/api/payment/verify?payment_id=${encodeURIComponent(paymentId)}&quote_id=${encodeURIComponent(quoteId)}`)
         .then((res) => res.json())
         .then((data) => {
-          if (data.status === "approved") {
+          if (data.status === "approved" && data.verified) {
             setPaymentRequired(false)
             setPaymentStatus("approved")
-            sessionStorage.setItem("giveawayPaid", "true")
           } else {
             setPaymentStatus("failed")
           }
         })
         .catch(() => setPaymentStatus("failed"))
-    } else if (status === "approved") {
-      setPaymentRequired(false)
-      setPaymentStatus("approved")
-      sessionStorage.setItem("giveawayPaid", "true")
     }
-  }, [searchParams])
+  }, [settings, allParticipants.length, searchParams])
 
   useEffect(() => {
     const storedSettings = sessionStorage.getItem("giveawaySettings")
@@ -147,12 +144,23 @@ export function GiveawayResultView() {
       const res = await fetch("/api/payment/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ price, title: `Sorteo Instagram - SorteosWeb` }),
+        body: JSON.stringify({
+          commentCount: allParticipants.length,
+          settings: {
+            numberOfWinners: settings.numberOfWinners,
+            filterDuplicates: settings.filterDuplicates,
+            requireMentions: settings.requireMentions,
+            excludeAccounts: settings.excludeAccounts,
+            minCommentLength: settings.minCommentLength,
+            keywordFilter: settings.keywordFilter,
+            backupWinners: settings.backupWinners,
+          },
+        }),
       })
       const data = await res.json()
       if (data.init_point) {
         setPaymentStatus("waiting")
-        sessionStorage.setItem("giveawayPaymentPending", "true")
+        if (data.price) setPrice(data.price)
         window.location.href = data.init_point
       } else {
         setPaymentStatus("failed")
@@ -175,9 +183,6 @@ export function GiveawayResultView() {
     sessionStorage.removeItem("giveawaySettings")
     sessionStorage.removeItem("giveawayParticipants")
     sessionStorage.removeItem("giveawayMedia")
-    sessionStorage.removeItem("giveawayPaid")
-    sessionStorage.removeItem("giveawayPaymentPending")
-    sessionStorage.removeItem("giveawayIsFree")
     router.push("/sorteo/nuevo")
   }
 
@@ -200,7 +205,7 @@ Publicacion: ${settings?.postUrl}
 
 CONFIGURACION:
 - Comentarios totales: ${allParticipants.length}
-- Participantes validos: ${filteredParticipants.length}
+- Participantes v\u00E1lidos: ${filteredParticipants.length}
 - Ganadores seleccionados: ${settings?.numberOfWinners}
 - Filtrar duplicados: ${settings?.filterDuplicates ? "Si" : "No"}
 - Menciones requeridas: ${settings?.requireMentions}
@@ -475,7 +480,7 @@ https://sorteosweb.com.ar`
                           @{winner.username}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Posicion #{index + 1}
+                          Posici\u00F3n #{index + 1}
                         </p>
                       </div>
                     </div>
@@ -583,7 +588,7 @@ https://sorteosweb.com.ar`
             >
               {[
                 { icon: Users, value: allParticipants.length, label: "Comentarios totales" },
-                { icon: Filter, value: filteredParticipants.length, label: "Participantes validos" },
+                { icon: Filter, value: filteredParticipants.length, label: "Participantes v\u00E1lidos" },
                 { icon: Trophy, value: winners.length, label: "Ganadores" },
                 { icon: Calendar, value: new Date().toLocaleDateString("es-ES", { day: "numeric", month: "short" }), label: "Fecha" },
               ].map((stat, i) => (
@@ -619,7 +624,7 @@ https://sorteosweb.com.ar`
                   <LinkIcon className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <h2 className="text-sm font-semibold text-foreground">
-                  Configuracion aplicada
+                  Configuraci\u00F3n aplicada
                 </h2>
               </div>
               <div className="p-5">
@@ -680,7 +685,7 @@ https://sorteosweb.com.ar`
         postUrl={settings?.postUrl || ""}
         logoDataUrl={settings?.logoDataUrl}
         accentColor={settings?.accentColor}
-        isFreeGiveaway={!paymentRequired}
+        isFreeGiveaway={isGiveawayFree}
         backupWinners={backupWinnersList}
         totalComments={allParticipants.length}
         filteredCount={filteredParticipants.length}
