@@ -6,7 +6,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  serverExternalPackages: ['playwright'],
+  serverExternalPackages: ['playwright', 'undici', 'apify-client'],
 }
 
 export default nextConfig

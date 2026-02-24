@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createJob, getJobByShortcode } from "@/lib/scrape-job-store"
-import { runScrapeJob } from "@/lib/scrape-job-runner"
+import { createJob, getJobByShortcode, CountingMode } from "@/lib/scrape-job-store"
+import { runApifyScrapeJob } from "@/lib/apify/apify-scraper"
+import { validateApifyConfig } from "@/lib/apify/apify-config"
+import { MOCK_ENABLED } from "@/lib/mock/mock-data"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { shortcode, mediaId, estimatedTotal } = body as {
+    const { shortcode, mediaId, estimatedTotal, force, countingMode } = body as {
       shortcode?: string
       mediaId?: string
       estimatedTotal?: number
+      force?: boolean
+      countingMode?: string
     }
 
     if (!shortcode || !mediaId) {
@@ -26,15 +30,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Dedup: if already scraping this shortcode, return existing job
-    const existing = getJobByShortcode(shortcode)
-    if (existing) {
-      return NextResponse.json({ jobId: existing.jobId })
+    // Validate Apify config (skip in mock mode)
+    if (!MOCK_ENABLED) {
+      const apifyValidation = validateApifyConfig()
+      if (!apifyValidation.valid) {
+        return NextResponse.json(
+          { error: apifyValidation.error },
+          { status: 500 },
+        )
+      }
     }
 
-    // Create and start job
-    const jobId = createJob(shortcode, mediaId, estimatedTotal || 0)
-    runScrapeJob(jobId).catch(console.error) // fire-and-forget
+    // Parse counting mode (accept string, map to enum)
+    const mode = countingMode === "TOP_LEVEL_PLUS_REPLIES"
+      ? CountingMode.TOP_LEVEL_PLUS_REPLIES
+      : CountingMode.TOP_LEVEL_ONLY
+
+    // Dedup: if already scraping this shortcode, return existing job (unless force)
+    if (!force) {
+      const existing = getJobByShortcode(shortcode)
+      if (existing) {
+        return NextResponse.json({ jobId: existing.jobId })
+      }
+    }
+
+    // Create and start Apify job (fire-and-forget)
+    const jobId = createJob(shortcode, mediaId, estimatedTotal || 0, mode)
+    runApifyScrapeJob(jobId).catch(console.error)
 
     return NextResponse.json({ jobId })
   } catch (error) {

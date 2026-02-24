@@ -13,6 +13,7 @@ export function Header() {
     { label: "Funcionalidades", href: "/#features" },
     { label: "Proceso", href: "/#how-it-works" },
     { label: "Precios", href: "/#pricing" },
+    { label: "FAQ", href: "/#faq" },
   ]
 
   return (
@@ -21,9 +22,16 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <motion.div
+              className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"
+              whileHover={{
+                rotate: [0, -12, 12, -8, 8, 0],
+                scale: [1, 1.15, 1.15, 1.1, 1.1, 1],
+              }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+            >
               <Gift className="w-4 h-4 text-primary-foreground" />
-            </div>
+            </motion.div>
             <span className="text-base font-semibold text-foreground tracking-tight">
               SorteosWeb
             </span>

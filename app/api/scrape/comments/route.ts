@@ -35,6 +35,9 @@ export async function GET(request: NextRequest) {
     comments: cached.comments,
     hasMore: !cached.complete,
     total: cached.comments.length,
+    topLevelCount: cached.topLevelCount,
+    inferredRepliesTotal: cached.inferredRepliesTotal,
+    previewRepliesCount: cached.previewRepliesCount,
     source: "cache",
   })
 }

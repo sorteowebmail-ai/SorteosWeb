@@ -15,7 +15,8 @@ export interface PostInfo {
   ownerUsername: string
   caption: string
   displayUrl: string
-  commentCount: number
+  commentCount: number          // total IG reports (top-level + replies)
+  topLevelCommentCount: number  // top-level only (0 = unknown)
   likeCount: number
   isVideo: boolean
 }
@@ -25,6 +26,13 @@ export interface ScrapedComment {
   username: string
   text: string
   timestamp: string
+  parentId: string | null       // null = top-level, string = reply
+  childCommentCount: number     // replies this comment has (0 for replies themselves)
+}
+
+export interface ReplySummary {
+  previewRepliesIncluded: number  // replies that came free in preview
+  childCommentCountSum: number    // sum of child_comment_count across all top-level
 }
 
 // ============================================================
@@ -104,12 +112,22 @@ export function getCookies(): { cookieStr: string; csrfToken: string } {
 function buildHeaders(
   cookieStr: string,
   csrfToken: string,
-  extra?: Record<string, string>
+  extra?: Record<string, string>,
+  sessionIndex?: number,
 ): Record<string, string> {
+  // Use fingerprint for the session if available
+  let fp: import("./fingerprint").BrowserFingerprint | null = null
+  if (sessionIndex !== undefined) {
+    try {
+      const { getFingerprint } = require("./fingerprint") as typeof import("./fingerprint") // eslint-disable-line @typescript-eslint/no-require-imports
+      fp = getFingerprint(sessionIndex)
+    } catch { /* fingerprint module not available */ }
+  }
+
   return {
-    "User-Agent": USER_AGENT,
+    "User-Agent": fp?.userAgent ?? USER_AGENT,
     Accept: "*/*",
-    "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Accept-Language": fp?.acceptLanguage ?? "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7",
     "X-IG-App-ID": IG_APP_ID,
     "X-IG-WWW-Claim": "0",
     "X-Requested-With": "XMLHttpRequest",
@@ -120,15 +138,26 @@ function buildHeaders(
     "Sec-Fetch-Dest": "empty",
     "Sec-Fetch-Mode": "cors",
     "Sec-Fetch-Site": "same-origin",
+    ...(fp?.secChUa && { "Sec-CH-UA": fp.secChUa }),
+    ...(fp?.secChUaPlatform && { "Sec-CH-UA-Platform": fp.secChUaPlatform }),
+    ...(fp?.secChUaMobile && { "Sec-CH-UA-Mobile": fp.secChUaMobile }),
     ...extra,
   }
 }
 
-function buildPageHeaders(cookieStr: string): Record<string, string> {
+function buildPageHeaders(cookieStr: string, sessionIndex?: number): Record<string, string> {
+  let fp: import("./fingerprint").BrowserFingerprint | null = null
+  if (sessionIndex !== undefined) {
+    try {
+      const { getFingerprint } = require("./fingerprint") as typeof import("./fingerprint") // eslint-disable-line @typescript-eslint/no-require-imports
+      fp = getFingerprint(sessionIndex)
+    } catch { /* fingerprint module not available */ }
+  }
+
   return {
-    "User-Agent": USER_AGENT,
+    "User-Agent": fp?.userAgent ?? USER_AGENT,
     Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-    "Accept-Language": "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Accept-Language": fp?.acceptLanguage ?? "es-AR,es;q=0.9,en-US;q=0.8,en;q=0.7",
     "Cache-Control": "no-cache",
     Pragma: "no-cache",
     Cookie: cookieStr,
@@ -176,12 +205,13 @@ export function checkAuthError(data: { message?: string; status?: string }): voi
 async function scrapeWithGraphQLPost(
   shortcode: string,
   cookieStr: string,
-  csrfToken: string
+  csrfToken: string,
+  sessionIndex?: number
 ): Promise<PostInfo | null> {
   try {
     const headers = buildHeaders(cookieStr, csrfToken, {
       "Content-Type": "application/x-www-form-urlencoded",
-    })
+    }, sessionIndex)
 
     const body = new URLSearchParams({
       av: "17841400577710658",
@@ -218,10 +248,12 @@ async function scrapeWithGraphQLPost(
       doc_id: "8845758582119845",
     })
 
-    const res = await fetch("https://www.instagram.com/graphql/query", {
+    const { proxyFetch } = await import("./proxy-fetch")
+    const res = await proxyFetch("https://www.instagram.com/graphql/query", {
       method: "POST",
       headers,
       body: body.toString(),
+      sessionIndex,
     })
 
     if (!res.ok) return null
@@ -243,6 +275,7 @@ async function scrapeWithGraphQLPost(
         caption: altMedia.edge_media_to_caption?.edges?.[0]?.node?.text || altMedia.caption?.text || "",
         displayUrl: altMedia.display_url || altMedia.image_versions2?.candidates?.[0]?.url || "",
         commentCount: altMedia.edge_media_to_parent_comment?.count || altMedia.edge_media_to_comment?.count || altMedia.comment_count || 0,
+        topLevelCommentCount: altMedia.edge_media_to_parent_comment?.count || 0,
         likeCount: altMedia.edge_media_preview_like?.count || altMedia.like_count || 0,
         isVideo: altMedia.is_video || altMedia.media_type === 2 || false,
       }
@@ -255,6 +288,7 @@ async function scrapeWithGraphQLPost(
       caption: media.edge_media_to_caption?.edges?.[0]?.node?.text || "",
       displayUrl: media.display_url || media.thumbnail_src || "",
       commentCount: media.edge_media_to_parent_comment?.count || media.edge_media_to_comment?.count || 0,
+      topLevelCommentCount: media.edge_media_to_parent_comment?.count || 0,
       likeCount: media.edge_media_preview_like?.count || 0,
       isVideo: media.is_video || false,
     }
@@ -268,16 +302,18 @@ async function scrapeWithGraphQLPost(
  */
 async function scrapeWithPageHTML(
   shortcode: string,
-  cookieStr: string
+  cookieStr: string,
+  sessionIndex?: number
 ): Promise<PostInfo | null> {
   try {
-    const headers = buildPageHeaders(cookieStr)
+    const headers = buildPageHeaders(cookieStr, sessionIndex)
+    const { proxyFetch } = await import("./proxy-fetch")
 
     // Try both /p/ and /reel/ URLs
     for (const pathType of ["reel", "p"]) {
-      const res = await fetch(
+      const res = await proxyFetch(
         `https://www.instagram.com/${pathType}/${shortcode}/`,
-        { headers, redirect: "follow" }
+        { headers, redirect: "follow", sessionIndex }
       )
 
       if (!res.ok) continue
@@ -311,6 +347,7 @@ async function scrapeWithPageHTML(
               caption: item.caption?.text || "",
               displayUrl: item.image_versions2?.candidates?.[0]?.url || "",
               commentCount: item.comment_count || 0,
+              topLevelCommentCount: 0,
               likeCount: item.like_count || 0,
               isVideo: item.media_type === 2,
             }
@@ -330,6 +367,7 @@ async function scrapeWithPageHTML(
             caption: item.caption?.text || "",
             displayUrl: item.image_versions2?.candidates?.[0]?.url || "",
             commentCount: item.comment_count || 0,
+            topLevelCommentCount: 0,
             likeCount: item.like_count || 0,
             isVideo: item.media_type === 2,
           }
@@ -346,6 +384,8 @@ async function scrapeWithPageHTML(
       const isVideoMatch = html.match(/"is_video":(true|false)/) || html.match(/"media_type":(\d)/)
 
       if (mediaIdMatch || usernameMatch) {
+        // Try to extract top-level count from edge_media_to_parent_comment
+        const topLevelMatch = html.match(/"edge_media_to_parent_comment":\{"count":(\d+)/)
         return {
           shortcode,
           mediaId: mediaIdMatch?.[1] || shortcodeToMediaId(shortcode),
@@ -353,6 +393,7 @@ async function scrapeWithPageHTML(
           caption: captionMatch?.[1]?.replace(/\\n/g, "\n").replace(/\\"/g, '"') || "",
           displayUrl: displayUrlMatch?.[1]?.replace(/\\u0026/g, "&") || "",
           commentCount: parseInt(commentCountMatch?.[1] || "0"),
+          topLevelCommentCount: topLevelMatch ? parseInt(topLevelMatch[1]) : 0,
           likeCount: parseInt(likeCountMatch?.[1] || "0"),
           isVideo: isVideoMatch?.[1] === "true" || isVideoMatch?.[1] === "2",
         }
@@ -371,17 +412,19 @@ async function scrapeWithPageHTML(
 async function scrapeWithV1API(
   shortcode: string,
   cookieStr: string,
-  csrfToken: string
+  csrfToken: string,
+  sessionIndex?: number
 ): Promise<PostInfo | null> {
   try {
     const mediaId = shortcodeToMediaId(shortcode)
-    const headers = buildHeaders(cookieStr, csrfToken)
+    const headers = buildHeaders(cookieStr, csrfToken, undefined, sessionIndex)
+    const { proxyFetch } = await import("./proxy-fetch")
 
     // Try both i.instagram.com (mobile API) and www.instagram.com
     for (const host of ["i.instagram.com", "www.instagram.com"]) {
-      const res = await fetch(
+      const res = await proxyFetch(
         `https://${host}/api/v1/media/${mediaId}/info/`,
-        { headers }
+        { headers, sessionIndex }
       )
 
       if (!res.ok) {
@@ -411,6 +454,7 @@ async function scrapeWithV1API(
             item.carousel_media?.[0]?.image_versions2?.candidates?.[0]?.url ||
             "",
           commentCount: item.comment_count || 0,
+          topLevelCommentCount: 0, // V1 API doesn't distinguish
           likeCount: item.like_count || 0,
           isVideo: item.media_type === 2,
         }
@@ -426,16 +470,19 @@ async function scrapeWithV1API(
  * Strategy 4: Use oEmbed for basic info (public, no auth needed)
  */
 async function scrapeWithOEmbed(
-  shortcode: string
+  shortcode: string,
+  sessionIndex?: number
 ): Promise<PostInfo | null> {
   try {
-    const res = await fetch(
+    const { proxyFetch } = await import("./proxy-fetch")
+    const res = await proxyFetch(
       `https://www.instagram.com/api/v1/oembed/?url=https://www.instagram.com/p/${shortcode}/`,
       {
         headers: {
           "User-Agent": USER_AGENT,
           Accept: "application/json",
         },
+        sessionIndex,
       }
     )
 
@@ -453,8 +500,9 @@ async function scrapeWithOEmbed(
       ownerUsername: data.author_name || "unknown",
       caption: data.title || "",
       displayUrl: data.thumbnail_url || "",
-      commentCount: 0, // oEmbed doesn't provide this
-      likeCount: 0,    // oEmbed doesn't provide this
+      commentCount: 0,          // oEmbed doesn't provide this
+      topLevelCommentCount: 0,  // oEmbed doesn't provide this
+      likeCount: 0,
       isVideo: false,
     }
   } catch {
@@ -469,15 +517,29 @@ async function scrapeWithOEmbed(
 /**
  * Scrape post information — tries multiple strategies for reliability
  */
-export async function scrapePostInfo(shortcode: string): Promise<PostInfo> {
-  const { cookieStr, csrfToken } = getCookies()
+export async function scrapePostInfo(shortcode: string, sessionIndex?: number): Promise<PostInfo> {
+  // Use session manager if available, else fallback to getCookies
+  let cookieStr: string, csrfToken: string, sIdx: number | undefined
+  try {
+    const { getSession } = await import("./session-manager")
+    const session = getSession()
+    cookieStr = session.cookieStr
+    csrfToken = session.csrfToken
+    sIdx = sessionIndex ?? session.index
+  } catch {
+    const c = getCookies()
+    cookieStr = c.cookieStr
+    csrfToken = c.csrfToken
+    sIdx = undefined
+  }
+  const { proxyFetch } = await import("./proxy-fetch")
 
   // Strategy 1: Web info endpoint (shortcode-based, most reliable)
   try {
-    const webInfoHeaders = buildHeaders(cookieStr, csrfToken)
-    const webInfoRes = await fetch(
+    const webInfoHeaders = buildHeaders(cookieStr, csrfToken, undefined, sIdx)
+    const webInfoRes = await proxyFetch(
       `https://www.instagram.com/api/v1/media/shortcode/${shortcode}/web_info/`,
-      { headers: webInfoHeaders }
+      { headers: webInfoHeaders, sessionIndex: sIdx }
     )
     if (webInfoRes.ok) {
       const webInfoText = await webInfoRes.text()
@@ -495,6 +557,7 @@ export async function scrapePostInfo(shortcode: string): Promise<PostInfo> {
               item.carousel_media?.[0]?.image_versions2?.candidates?.[0]?.url ||
               "",
             commentCount: item.comment_count || 0,
+            topLevelCommentCount: 0, // V1 web_info doesn't provide this
             likeCount: item.like_count || 0,
             isVideo: item.media_type === 2,
           }
@@ -506,19 +569,19 @@ export async function scrapePostInfo(shortcode: string): Promise<PostInfo> {
   }
 
   // Strategy 2: GraphQL POST
-  const gqlResult = await scrapeWithGraphQLPost(shortcode, cookieStr, csrfToken)
+  const gqlResult = await scrapeWithGraphQLPost(shortcode, cookieStr, csrfToken, sIdx)
   if (gqlResult) return gqlResult
 
   // Strategy 3: V1 media info API
-  const v1Result = await scrapeWithV1API(shortcode, cookieStr, csrfToken)
+  const v1Result = await scrapeWithV1API(shortcode, cookieStr, csrfToken, sIdx)
   if (v1Result) return v1Result
 
   // Strategy 4: Scrape page HTML (limited data)
-  const htmlResult = await scrapeWithPageHTML(shortcode, cookieStr)
+  const htmlResult = await scrapeWithPageHTML(shortcode, cookieStr, sIdx)
   if (htmlResult) return htmlResult
 
   // Strategy 5: oEmbed (public fallback, very limited data)
-  const oembedResult = await scrapeWithOEmbed(shortcode)
+  const oembedResult = await scrapeWithOEmbed(shortcode, sIdx)
   if (oembedResult) return oembedResult
 
   throw new Error(
@@ -533,7 +596,7 @@ export async function scrapePostInfo(shortcode: string): Promise<PostInfo> {
  *   1. Dual-host: alternate between www.instagram.com and i.instagram.com
  *      — they have SEPARATE rate-limit buckets, effectively doubling capacity
  *   2. count=100: request 100 comments/page instead of the default ~20
- *   3. can_support_threading=false: flat chronological list, more per page
+ *   3. can_support_threading=false: flat chronological list, up to 100/page, deeper pagination
  *   4. Cross-host fallback: if one host returns 429, try the other immediately
  *   5. Exponential backoff only when BOTH hosts fail
  */
@@ -552,8 +615,9 @@ function buildCommentsUrl(host: string, mediaId: string, cursor?: string): strin
   return url
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function parseCommentsResponse(data: {
-  comments?: { pk: string; user: { username: string }; text: string; created_at: number }[]
+  comments?: any[]
   has_more_comments?: boolean
   has_more_headload_comments?: boolean
   next_min_id?: string
@@ -563,35 +627,84 @@ export function parseCommentsResponse(data: {
   hasMore: boolean
   cursor?: string
   total?: number
+  replySummary: ReplySummary
 } {
-  const comments: ScrapedComment[] = (data.comments || []).map(
-    (c) => ({
+  const comments: ScrapedComment[] = []
+  let previewRepliesIncluded = 0
+  let childCommentCountSum = 0
+
+  for (const c of data.comments || []) {
+    // With threading=false, all comments are flat.
+    // Replies may have parent_comment_id (not guaranteed for all posts).
+    const parentId = c.parent_comment_id ? String(c.parent_comment_id) : null
+    const childCount = typeof c.child_comment_count === "number" ? c.child_comment_count : 0
+    if (parentId === null) childCommentCountSum += childCount
+
+    comments.push({
       id: String(c.pk),
       username: c.user?.username || "unknown",
       text: c.text || "",
       timestamp: new Date((c.created_at || 0) * 1000).toISOString(),
+      parentId,
+      childCommentCount: childCount,
     })
-  )
+
+    if (parentId !== null) previewRepliesIncluded++
+
+    // Also extract preview_child_comments if present (threading=true compat)
+    const previews = c.preview_child_comments || []
+    for (const r of previews) {
+      previewRepliesIncluded++
+      comments.push({
+        id: String(r.pk),
+        username: r.user?.username || "unknown",
+        text: r.text || "",
+        timestamp: new Date((r.created_at || 0) * 1000).toISOString(),
+        parentId: String(c.pk),
+        childCommentCount: 0,
+      })
+    }
+  }
+
+  const hasMore = data.has_more_comments || data.has_more_headload_comments || false
+  const cursor = data.next_min_id || undefined
+
+  // Cursor anomaly detection: hasMore=true but no cursor → prevent infinite loop
+  if (hasMore && !cursor?.trim()) {
+    console.error(`[scraper] ANOMALY: has_more=true but no cursor returned`)
+    return {
+      comments,
+      hasMore: false,
+      cursor: undefined,
+      total: data.comment_count || undefined,
+      replySummary: { previewRepliesIncluded, childCommentCountSum },
+    }
+  }
+
   return {
     comments,
-    hasMore: data.has_more_comments || data.has_more_headload_comments || false,
-    cursor: data.next_min_id || undefined,
+    hasMore,
+    cursor,
     total: data.comment_count || undefined,
+    replySummary: { previewRepliesIncluded, childCommentCountSum },
   }
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 async function fetchCommentsFromHost(
   host: string,
   mediaId: string,
   cursor: string | undefined,
   headers: Record<string, string>,
+  sessionIndex?: number,
 ): Promise<
   | { ok: true; data: ReturnType<typeof parseCommentsResponse> }
   | { ok: false; error: Error; retryable: boolean }
 > {
   try {
     const url = buildCommentsUrl(host, mediaId, cursor)
-    const res = await fetch(url, { headers })
+    const { proxyFetch } = await import("./proxy-fetch")
+    const res = await proxyFetch(url, { headers, sessionIndex })
 
     if (res.status === 302) {
       return {
@@ -676,16 +789,24 @@ async function fetchCommentsFromHost(
 
 export async function scrapeComments(
   shortcode: string,
-  cursor?: string
+  cursor?: string,
+  cookieIndex?: number,
 ): Promise<{
   comments: ScrapedComment[]
   hasMore: boolean
   cursor?: string
   total?: number
+  replySummary: ReplySummary
+  cookieIndex: number
 }> {
-  const { cookieStr, csrfToken } = getCookies()
+  // Use session manager for rotation support
+  const { getSession, reportSuccess, reportFailure } = await import("./session-manager")
+  const { ReasonCode } = await import("./scrape-types")
+  const cookie = cookieIndex !== undefined
+    ? (() => { const c = getSession(); return { ...c, index: cookieIndex }; })()
+    : getSession()
   const mediaId = shortcodeToMediaId(shortcode)
-  const headers = buildHeaders(cookieStr, csrfToken)
+  const headers = buildHeaders(cookie.cookieStr, cookie.csrfToken, undefined, cookie.index)
 
   let lastError: Error | null = null
 
@@ -702,21 +823,148 @@ export async function scrapeComments(
     const fallback = HOSTS[(hostIndex + 1) % HOSTS.length]
     hostIndex++ // alternate for next call
 
-    const result = await fetchCommentsFromHost(primary, mediaId, cursor, headers)
-    if (result.ok) return result.data
-    if (!result.retryable) throw result.error
+    const result = await fetchCommentsFromHost(primary, mediaId, cursor, headers, cookie.index)
+    if (result.ok) {
+      reportSuccess(cookie.index)
+      return { ...result.data, cookieIndex: cookie.index }
+    }
+    if (!result.retryable) {
+      reportFailure(cookie.index, ReasonCode.UNKNOWN, result.error.message)
+      throw result.error
+    }
 
     // Primary failed with retryable error → try fallback host immediately
     console.log(`${primary} failed (${result.error.message}), trying ${fallback}`)
-    const fallbackResult = await fetchCommentsFromHost(fallback, mediaId, cursor, headers)
-    if (fallbackResult.ok) return fallbackResult.data
-    if (!fallbackResult.retryable) throw fallbackResult.error
+    const fallbackResult = await fetchCommentsFromHost(fallback, mediaId, cursor, headers, cookie.index)
+    if (fallbackResult.ok) {
+      reportSuccess(cookie.index)
+      return { ...fallbackResult.data, cookieIndex: cookie.index }
+    }
+    if (!fallbackResult.retryable) {
+      reportFailure(cookie.index, ReasonCode.UNKNOWN, fallbackResult.error.message)
+      throw fallbackResult.error
+    }
 
-    // Both hosts failed → will retry with backoff
+    // Both hosts failed → mark transient failure, will retry with backoff
+    reportFailure(cookie.index, ReasonCode.RATE_LIMIT, fallbackResult.error.message)
     lastError = fallbackResult.error
   }
 
   throw lastError || new InstagramTransientError("Error tras reintentos agotados")
+}
+
+/**
+ * Scrape one page of comments with threading=true (for verification pass).
+ * Returns top-level comments with child_comment_count and preview_child_comments.
+ * Used after main flat pagination to audit reply structure.
+ */
+export async function scrapeCommentsThreaded(
+  shortcode: string,
+  cursor?: string,
+  sessionIndex?: number,
+): Promise<{
+  comments: ScrapedComment[]
+  hasMore: boolean
+  cursor?: string
+  total?: number
+  replySummary: ReplySummary
+}> {
+  // Use session manager if sessionIndex provided, else fallback to getCookies
+  let cookieStr: string, csrfToken: string, sIdx: number | undefined
+  if (sessionIndex !== undefined) {
+    const { getSession } = await import("./session-manager")
+    const session = getSession()
+    cookieStr = session.cookieStr
+    csrfToken = session.csrfToken
+    sIdx = session.index
+  } else {
+    const c = getCookies()
+    cookieStr = c.cookieStr
+    csrfToken = c.csrfToken
+    sIdx = undefined
+  }
+  const mediaId = shortcodeToMediaId(shortcode)
+  const headers = buildHeaders(cookieStr, csrfToken, undefined, sIdx)
+
+  let url = `https://www.instagram.com/api/v1/media/${mediaId}/comments/?can_support_threading=true&permalink_enabled=false&count=100`
+  if (cursor) url += `&min_id=${encodeURIComponent(cursor)}`
+
+  const { proxyFetch } = await import("./proxy-fetch")
+  const res = await proxyFetch(url, { headers, sessionIndex: sIdx })
+  if (!res.ok) throw new InstagramTransientError(`HTTP ${res.status}`, res.status)
+
+  const text = await res.text()
+  if (!text.startsWith("{")) throw new InstagramTransientError("Non-JSON response")
+
+  const data = JSON.parse(text)
+  checkAuthError(data)
+  if (data.status === "fail") throw new InstagramTransientError(data.message || "fail")
+
+  return parseCommentsResponse(data)
+}
+
+/**
+ * Fetch child comments (replies) for a specific parent comment.
+ * Uses /api/v1/media/{mediaId}/comments/{parentPk}/child_comments/
+ */
+export async function scrapeChildComments(
+  shortcode: string,
+  parentCommentPk: string,
+  cursor?: string,
+  sessionIndex?: number,
+): Promise<{
+  comments: ScrapedComment[]
+  hasMore: boolean
+  cursor?: string
+}> {
+  // Use session manager if sessionIndex provided, else fallback to getCookies
+  let cookieStr: string, csrfToken: string, sIdx: number | undefined
+  if (sessionIndex !== undefined) {
+    const { getSession } = await import("./session-manager")
+    const session = getSession()
+    cookieStr = session.cookieStr
+    csrfToken = session.csrfToken
+    sIdx = session.index
+  } else {
+    const c = getCookies()
+    cookieStr = c.cookieStr
+    csrfToken = c.csrfToken
+    sIdx = undefined
+  }
+  const mediaId = shortcodeToMediaId(shortcode)
+  const headers = buildHeaders(cookieStr, csrfToken, undefined, sIdx)
+
+  let url = `https://www.instagram.com/api/v1/media/${mediaId}/comments/${parentCommentPk}/child_comments/?count=50`
+  if (cursor) url += `&max_id=${encodeURIComponent(cursor)}`
+
+  const { proxyFetch } = await import("./proxy-fetch")
+  const res = await proxyFetch(url, { headers, sessionIndex: sIdx })
+  if (!res.ok) throw new InstagramTransientError(`HTTP ${res.status}`, res.status)
+
+  const text = await res.text()
+  if (!text.startsWith("{")) throw new InstagramTransientError("Non-JSON response")
+
+  const data = JSON.parse(text)
+  checkAuthError(data)
+  if (data.status === "fail") throw new InstagramTransientError(data.message || "fail")
+
+  const comments: ScrapedComment[] = []
+  for (const c of data.child_comments || []) {
+    comments.push({
+      id: String(c.pk),
+      username: c.user?.username || "unknown",
+      text: c.text || "",
+      timestamp: new Date((c.created_at || 0) * 1000).toISOString(),
+      parentId: parentCommentPk,
+      childCommentCount: 0,
+    })
+  }
+
+  return {
+    comments,
+    hasMore: data.has_more_tail_child_comments || false,
+    cursor: data.next_max_child_cursor || undefined,
+  }
 }
 
 /**
@@ -728,12 +976,25 @@ export async function verifySession(): Promise<{
   error?: string
 }> {
   try {
-    const { cookieStr, csrfToken } = getCookies()
-    const headers = buildHeaders(cookieStr, csrfToken)
+    let cookieStr: string, csrfToken: string, sIdx: number | undefined
+    try {
+      const { getSession } = await import("./session-manager")
+      const session = getSession()
+      cookieStr = session.cookieStr
+      csrfToken = session.csrfToken
+      sIdx = session.index
+    } catch {
+      const c = getCookies()
+      cookieStr = c.cookieStr
+      csrfToken = c.csrfToken
+      sIdx = undefined
+    }
+    const headers = buildHeaders(cookieStr, csrfToken, undefined, sIdx)
+    const { proxyFetch } = await import("./proxy-fetch")
 
-    const res = await fetch(
+    const res = await proxyFetch(
       "https://www.instagram.com/api/v1/users/80838088763/info/",
-      { headers }
+      { headers, sessionIndex: sIdx }
     )
 
     const text = await res.text()

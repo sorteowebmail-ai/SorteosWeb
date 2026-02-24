@@ -51,6 +51,11 @@ export function GiveawayResultView() {
 
   const [isFullscreen, setIsFullscreen] = useState(false)
 
+  // Comment breakdown (total downloaded including replies)
+  const [commentBreakdown, setCommentBreakdown] = useState<{
+    totalDownloaded: number; topLevel: number; replies: number
+  } | null>(null)
+
   // Payment states
   const [paymentRequired, setPaymentRequired] = useState(true)
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "waiting" | "creating" | "verifying" | "approved" | "failed">("idle")
@@ -116,6 +121,12 @@ export function GiveawayResultView() {
 
       setAllParticipants(participants)
       setFilteredParticipants(filterParticipants(participants, parsed))
+
+      // Read comment breakdown (top-level vs replies)
+      const storedBreakdown = sessionStorage.getItem("giveawayCommentBreakdown")
+      if (storedBreakdown) {
+        try { setCommentBreakdown(JSON.parse(storedBreakdown)) } catch { /* ignore */ }
+      }
     } else {
       router.push("/sorteo/nuevo")
     }
@@ -577,6 +588,7 @@ https://sorteosweb.com.ar`
               filteredCount={filteredParticipants.length}
               winners={winners}
               backups={backupWinnersList}
+              commentBreakdown={commentBreakdown}
             />
 
             {/* Stats Grid */}

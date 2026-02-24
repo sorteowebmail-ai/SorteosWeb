@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server"
 // ── Simple in-memory rate limiter ────────────────
 const rateLimits = new Map<string, { count: number; resetAt: number }>()
 const RATE_LIMIT_WINDOW = 60_000 // 1 minute
-const RATE_LIMIT_MAX = 30 // 30 requests per minute per IP
+const RATE_LIMIT_MAX = 60 // 60 requests per minute per IP
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now()
@@ -38,6 +38,9 @@ export async function middleware(request: NextRequest) {
 
   // Only apply API protections to /api/ routes
   if (!pathname.startsWith("/api/")) return response
+
+  // Skip rate limiting for status polling (cheap in-memory lookup)
+  if (pathname === "/api/scrape/status") return response
 
   // B1: Rate limiting
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"

@@ -17,6 +17,10 @@ export interface CommentCacheFile {
   comments: ScrapedComment[]
   updatedAt: number // Date.now()
   complete: boolean
+  topLevelCount: number
+  inferredRepliesTotal: number
+  previewRepliesCount: number
+  completionReason: string | null
 }
 
 // ============================================================
@@ -50,7 +54,22 @@ export function getCachedComments(shortcode: string): CommentCacheFile | null {
     const filePath = cacheFilePath(shortcode)
     if (!fs.existsSync(filePath)) return null
     const raw = fs.readFileSync(filePath, "utf-8")
-    return JSON.parse(raw) as CommentCacheFile
+    const cache = JSON.parse(raw) as CommentCacheFile
+
+    // Migrate old cache format: backfill new fields
+    if (cache.topLevelCount === undefined) {
+      // Old format: comments have no parentId/childCommentCount
+      for (const c of cache.comments) {
+        if (c.parentId === undefined) (c as any).parentId = null  // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (c.childCommentCount === undefined) (c as any).childCommentCount = 0  // eslint-disable-line @typescript-eslint/no-explicit-any
+      }
+      cache.topLevelCount = cache.comments.length
+      cache.inferredRepliesTotal = 0
+      cache.previewRepliesCount = 0
+      cache.completionReason = null
+    }
+
+    return cache
   } catch {
     return null
   }
@@ -97,6 +116,7 @@ export function appendToCache(
     comments: ScrapedComment[]
     cursor: string | null
     complete: boolean
+    completionReason?: string | null
   },
 ): void {
   try {
@@ -111,6 +131,10 @@ export function appendToCache(
       comments: [],
       updatedAt: Date.now(),
       complete: false,
+      topLevelCount: 0,
+      inferredRepliesTotal: 0,
+      previewRepliesCount: 0,
+      completionReason: null,
     }
 
     // Append new comments (deduplicate by id)
@@ -122,9 +146,26 @@ export function appendToCache(
       }
     }
 
+    // Recompute aggregates from full comment list
+    let topLevelCount = 0
+    let inferredRepliesTotal = 0
+    let previewRepliesCount = 0
+    for (const c of cache.comments) {
+      if (c.parentId === null) {
+        topLevelCount++
+        inferredRepliesTotal += c.childCommentCount
+      } else {
+        previewRepliesCount++
+      }
+    }
+
     cache.pages += 1
     cache.cursor = page.cursor
     cache.complete = page.complete
+    cache.topLevelCount = topLevelCount
+    cache.inferredRepliesTotal = inferredRepliesTotal
+    cache.previewRepliesCount = previewRepliesCount
+    cache.completionReason = page.completionReason ?? cache.completionReason
     cache.updatedAt = Date.now()
 
     // Atomic write: temp file + rename
@@ -145,6 +186,10 @@ export function getCacheStats(shortcode: string): {
   exists: boolean
   complete: boolean
   commentCount: number
+  topLevelCount: number
+  inferredRepliesTotal: number
+  previewRepliesCount: number
+  completionReason: string | null
   pages: number
   cursor: string | null
   ageMs: number
@@ -155,6 +200,10 @@ export function getCacheStats(shortcode: string): {
     exists: true,
     complete: cache.complete,
     commentCount: cache.comments.length,
+    topLevelCount: cache.topLevelCount,
+    inferredRepliesTotal: cache.inferredRepliesTotal,
+    previewRepliesCount: cache.previewRepliesCount,
+    completionReason: cache.completionReason,
     pages: cache.pages,
     cursor: cache.cursor,
     ageMs: Date.now() - cache.updatedAt,

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, MessageSquare, Zap, Calendar } from "lucide-react";
+import { Star, MessageSquare, Zap, Calendar, Quote } from "lucide-react";
 
 const AVATAR_COLORS = [
   "bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400",
@@ -55,23 +55,26 @@ function formatNumber(n: number): string {
 
 export function TestimonialsSection() {
   return (
-    <section className="py-24 lg:py-32">
+    <section className="py-16 sm:py-24 lg:py-32">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center max-w-2xl mx-auto mb-16"
+          className="text-center max-w-2xl mx-auto mb-10 sm:mb-16"
         >
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
+          <p className="text-sm font-medium text-primary uppercase tracking-wider mb-3">
+            Testimonios
+          </p>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">
             Marcas y creadores que confían en SorteosWeb
           </h2>
-          <p className="mt-4 text-muted-foreground text-sm">
-            Resultados reales de sorteos realizados en la plataforma
+          <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground">
+            Resultados reales de sorteos realizados en la plataforma.
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 max-w-5xl mx-auto">
           {testimonials.map((t, index) => (
             <motion.div
               key={t.name}
@@ -79,8 +82,11 @@ export function TestimonialsSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className="rounded-xl bg-card border border-border/50 p-6 flex flex-col"
+              className="rounded-xl sm:rounded-2xl bg-card border border-border/50 p-5 sm:p-6 flex flex-col relative"
             >
+              {/* Quote icon */}
+              <Quote className="w-8 h-8 text-primary/10 absolute top-5 right-5" />
+
               {/* Stars */}
               <div className="flex gap-0.5 mb-4">
                 {Array.from({ length: t.rating }).map((_, i) => (
@@ -97,7 +103,7 @@ export function TestimonialsSection() {
               </p>
 
               {/* Stats strip */}
-              <div className="flex gap-3 mb-5">
+              <div className="flex gap-2 mb-5">
                 <div className="flex items-center gap-1.5 rounded-lg bg-secondary/60 px-2.5 py-1.5">
                   <MessageSquare className="w-3 h-3 text-muted-foreground" />
                   <span className="text-xs font-medium text-foreground">

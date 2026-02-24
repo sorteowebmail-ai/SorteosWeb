@@ -9,6 +9,7 @@ const footerLinks = {
     { label: "Precios", href: "/#pricing" },
     { label: "Proceso", href: "/#how-it-works" },
     { label: "Iniciar sorteo", href: "/sorteo/nuevo" },
+    { label: "FAQ", href: "/#faq" },
   ],
   legal: [
     { label: "Privacidad", href: "/privacidad" },
@@ -21,10 +22,10 @@ const footerLinks = {
 export function Footer() {
   return (
     <footer className="border-t border-border bg-card/50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12 lg:py-16">
+        <div className="grid gap-8 sm:gap-10 grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
-          <div className="lg:col-span-2">
+          <div className="col-span-2 lg:col-span-2">
             <Link href="/" className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <Gift className="w-4 h-4 text-primary-foreground" />

@@ -29,7 +29,17 @@
       "Bash(node -e \":*)",
       "Bash(git init:*)",
       "Bash(git remote add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(npx next dev:*)",
+      "WebFetch(domain:www.appsorteos.com)",
+      "WebFetch(domain:app-sorteos.com)",
+      "Bash(while read f)",
+      "Bash(do sed -i 's/SorteoWeb/SorteosWeb/g' \"$f\")",
+      "Bash(done)"
     ]
   }
 }

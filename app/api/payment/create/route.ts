@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { calculateGiveawayPrice, isFreeGiveaway } from "@/lib/pricing"
+import { calculateGiveawayPriceArs, isFreeGiveaway } from "@/lib/pricing"
 import { createQuote, hashSettings } from "@/lib/payment-store"
 import type { GiveawaySettings } from "@/lib/types"
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       backupWinners: Math.max(0, Math.min(10, Number(s.backupWinners) || 0)),
     }
 
-    // ── Check if free ─────────────────────────────
+    // ── Check if free (volume-based) ────────────────
     const fullSettings = {
       ...sanitized,
       postUrl: "",
@@ -71,12 +71,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // ── Calculate price server-side ───────────────
-    const price = calculateGiveawayPrice(fullSettings)
+    // ── Calculate price server-side (USD → ARS via dólar blue) ──
+    const pricing = await calculateGiveawayPriceArs(commentCount)
+    const priceArs = pricing.priceArs
 
     // ── Create quote ──────────────────────────────
     const settingsHash = hashSettings(sanitized)
-    const quoteId = createQuote(price, commentCount, settingsHash)
+    const quoteId = createQuote(priceArs, commentCount, settingsHash)
 
     // ── Create MercadoPago preference ─────────────
     const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN
@@ -95,8 +96,8 @@ export async function POST(request: NextRequest) {
     const preferenceBody: Record<string, unknown> = {
       items: [
         {
-          title: "Sorteo Instagram - SorteosWeb",
-          unit_price: price,
+          title: `Sorteo Instagram (${commentCount.toLocaleString()} comentarios) - SorteosWeb`,
+          unit_price: priceArs,
           quantity: 1,
           currency_id: "ARS",
         },
@@ -111,7 +112,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isLocalhost) {
-      // Webhook URL for production
       const webhookUrl = process.env.MERCADOPAGO_WEBHOOK_URL
       if (webhookUrl) {
         preferenceBody.notification_url = webhookUrl
@@ -145,7 +145,10 @@ export async function POST(request: NextRequest) {
       init_point: data.init_point,
       id: data.id,
       quote_id: quoteId,
-      price,
+      priceArs,
+      priceUsd: pricing.priceUsd,
+      exchangeRate: pricing.rate,
+      exchangeRateSource: pricing.rateSource,
     })
   } catch (error) {
     console.error("Payment create error:", error)

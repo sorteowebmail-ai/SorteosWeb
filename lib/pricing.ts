@@ -1,119 +1,102 @@
+/**
+ * Pricing module — Volume-based model with premium add-ons.
+ *
+ * Model:
+ *   ≤600 comments → FREE (base)
+ *   >600 comments → $0.80 USD / 1000 comments (ALL comments, not just excess)
+ *   Minimum charge: $0.40 USD
+ *   Add-ons: Logo +$0.50 USD, Color personalizado +$0.50 USD
+ *   Converted to ARS via dólar blue (promedio)
+ *
+ * Filters (menciones, duplicados, keywords, etc.) are FREE.
+ */
+
 import type { GiveawaySettings } from "./types"
+import {
+  PRICING_CONFIG,
+  calculatePriceUsd,
+  isFreeTier,
+} from "./pricing/pricing-config"
+import type { PricingAddOns } from "./pricing/pricing-config"
+import { usdToArs, getDolarBlueRate } from "./pricing/exchange-rate"
+import type { ExchangeRateStrategy } from "./pricing/exchange-rate"
 
-// Precio base: sorteo simple (1 ganador, sin filtros)
-const BASE_PRICE = 5000
+// Re-export for convenience
+export { PRICING_CONFIG, isFreeTier }
+export type { PricingAddOns }
 
-// Costo adicional por cada feature activada
-const FEATURE_COSTS = {
-  extraWinners: 1000,       // Más de 1 ganador
-  filterDuplicates: 1000,   // Filtrar comentarios duplicados
-  requireMentions: 1000,    // Exigir menciones mínimas
-  excludeAccounts: 1000,    // Excluir cuentas específicas
-  minCommentLength: 1000,   // Largo mínimo de comentario
-  keywordFilter: 1000,      // Filtro por palabras clave
-  backupWinners: 1000,      // Ganadores suplentes
-} as const
-
-// Precio máximo sin importar cuántos filtros se activen
-const MAX_PRICE = 10000
-
-// Sorteos simples con hasta este numero de comentarios son gratis
-const FREE_COMMENT_LIMIT = 500
-
-export function calculateGiveawayPrice(settings: GiveawaySettings): number {
-  let price = BASE_PRICE
-
-  if (settings.numberOfWinners > 1) {
-    price += FEATURE_COSTS.extraWinners
-  }
-
-  if (settings.filterDuplicates) {
-    price += FEATURE_COSTS.filterDuplicates
-  }
-
-  if (settings.requireMentions > 0) {
-    price += FEATURE_COSTS.requireMentions
-  }
-
-  if (settings.excludeAccounts.length > 0) {
-    price += FEATURE_COSTS.excludeAccounts
-  }
-
-  if (settings.minCommentLength > 0) {
-    price += FEATURE_COSTS.minCommentLength
-  }
-
-  if (settings.keywordFilter?.length > 0) {
-    price += FEATURE_COSTS.keywordFilter
-  }
-
-  if (settings.backupWinners > 0) {
-    price += FEATURE_COSTS.backupWinners
-  }
-
-  return Math.min(price, MAX_PRICE)
+export interface PriceEstimate {
+  priceArs: number
+  priceUsd: number
+  baseUsd: number
+  addOnsUsd: number
+  rate: number
+  rateSource: "api" | "cache" | "fallback"
+  isFree: boolean
 }
 
 /**
- * Determina si un sorteo es gratis.
- * Gratis = hasta 500 comentarios + sorteo simple (sin filtros ni features extras).
- * Logo y color de acento NO cuentan como features pagas.
+ * Calculate the giveaway price in ARS based on comment count + add-ons.
+ * This is an async function because it fetches the dólar blue rate.
  */
-export function isFreeGiveaway(settings: GiveawaySettings, commentCount: number): boolean {
-  if (commentCount > FREE_COMMENT_LIMIT) return false
-  if (settings.numberOfWinners > 1) return false
-  if (settings.filterDuplicates) return false
-  if (settings.requireMentions > 0) return false
-  if (settings.excludeAccounts.length > 0) return false
-  if (settings.minCommentLength > 0) return false
-  if (settings.keywordFilter?.length > 0) return false
-  if (settings.backupWinners > 0) return false
-  return true
+export async function calculateGiveawayPriceArs(
+  commentCount: number,
+  addOns?: PricingAddOns,
+): Promise<PriceEstimate> {
+  const baseUsd = calculatePriceUsd(commentCount)
+  const totalUsd = calculatePriceUsd(commentCount, addOns)
+
+  if (totalUsd === 0) {
+    return { priceArs: 0, priceUsd: 0, baseUsd: 0, addOnsUsd: 0, rate: 0, rateSource: "cache", isFree: true }
+  }
+
+  const addOnsUsd = totalUsd - baseUsd
+
+  const { ars, rate, source } = await usdToArs(
+    totalUsd,
+    PRICING_CONFIG.exchangeRateStrategy as ExchangeRateStrategy,
+  )
+
+  return {
+    priceArs: ars,
+    priceUsd: totalUsd,
+    baseUsd,
+    addOnsUsd,
+    rate,
+    rateSource: source,
+    isFree: false,
+  }
 }
 
-export function getPriceBreakdown(settings: GiveawaySettings) {
-  const items: { label: string; price: number }[] = [
-    { label: "Sorteo base (1 ganador)", price: BASE_PRICE },
-  ]
-
-  if (settings.numberOfWinners > 1) {
-    items.push({ label: `Múltiples ganadores (${settings.numberOfWinners})`, price: FEATURE_COSTS.extraWinners })
-  }
-
-  if (settings.filterDuplicates) {
-    items.push({ label: "Filtrar duplicados", price: FEATURE_COSTS.filterDuplicates })
-  }
-
-  if (settings.requireMentions > 0) {
-    items.push({ label: `Menciones mínimas (${settings.requireMentions})`, price: FEATURE_COSTS.requireMentions })
-  }
-
-  if (settings.excludeAccounts.length > 0) {
-    items.push({ label: `Excluir cuentas (${settings.excludeAccounts.length})`, price: FEATURE_COSTS.excludeAccounts })
-  }
-
-  if (settings.minCommentLength > 0) {
-    items.push({ label: `Largo mínimo (${settings.minCommentLength} chars)`, price: FEATURE_COSTS.minCommentLength })
-  }
-
-  if (settings.keywordFilter?.length > 0) {
-    items.push({ label: `Filtro por palabras (${settings.keywordFilter.length})`, price: FEATURE_COSTS.keywordFilter })
-  }
-
-  if (settings.backupWinners > 0) {
-    items.push({ label: `Suplentes (${settings.backupWinners})`, price: FEATURE_COSTS.backupWinners })
-  }
-
-  const subtotal = items.reduce((sum, item) => sum + item.price, 0)
-  const total = Math.min(subtotal, MAX_PRICE)
-  const capped = subtotal > MAX_PRICE
-
-  return { items, subtotal, total, capped }
+/**
+ * Synchronous price calculation (USD only, no exchange rate needed).
+ */
+export function calculateGiveawayPrice(_settings: GiveawaySettings, commentCount: number = 0): number {
+  return calculatePriceUsd(commentCount)
 }
 
+/**
+ * Determine if a giveaway is free (no add-ons, within free tier).
+ */
+export function isFreeGiveaway(_settings: GiveawaySettings, commentCount: number): boolean {
+  return isFreeTier(commentCount)
+}
+
+/**
+ * Get the dólar blue rate info (for display in pricing section).
+ */
+export async function getExchangeRateInfo(): Promise<{
+  rate: number
+  source: "api" | "cache" | "fallback"
+  updatedAt: string | null
+}> {
+  return getDolarBlueRate(PRICING_CONFIG.exchangeRateStrategy as ExchangeRateStrategy)
+}
+
+// Export constants for backward compat
 export const PRICING = {
-  BASE_PRICE,
-  MAX_PRICE,
-  FREE_COMMENT_LIMIT,
-  FEATURE_COSTS,
+  FREE_COMMENT_LIMIT: PRICING_CONFIG.freeTierLimit,
+  USER_PRICE_PER_1000: PRICING_CONFIG.userPricePer1000,
+  LOGO_ADDON_USD: PRICING_CONFIG.logoAddOnUsd,
+  COLOR_ADDON_USD: PRICING_CONFIG.colorAddOnUsd,
 } as const

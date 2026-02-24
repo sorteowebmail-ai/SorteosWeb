@@ -23,6 +23,11 @@ interface TransparencyBlockProps {
   filteredCount: number;
   winners: Participant[];
   backups: Participant[];
+  commentBreakdown?: {
+    totalDownloaded: number;
+    topLevel: number;
+    replies: number;
+  } | null;
 }
 
 function generateSorteoHash(settings: GiveawaySettings, timestamp: string): string {
@@ -42,6 +47,7 @@ export function TransparencyBlock({
   filteredCount,
   winners,
   backups,
+  commentBreakdown,
 }: TransparencyBlockProps) {
   const [showRandomnessModal, setShowRandomnessModal] = useState(false);
   const [copiedHash, setCopiedHash] = useState(false);
@@ -131,13 +137,18 @@ export function TransparencyBlock({
                 <MessageSquare className="w-4 h-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Comentarios</p>
+                <p className="text-xs text-muted-foreground mb-0.5">Comentarios directos</p>
                 <p className="text-sm font-medium text-foreground">
                   {totalComments.toLocaleString()} analizados
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {filteredCount.toLocaleString()} válidos
                 </p>
+                {commentBreakdown && commentBreakdown.replies > 0 && (
+                  <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                    + {commentBreakdown.replies.toLocaleString()} respuestas excluidas
+                  </p>
+                )}
               </div>
             </div>
 

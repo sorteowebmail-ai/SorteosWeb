@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { extractShortcode, scrapePostInfo } from "@/lib/scraper"
 import { createJob, getJobByShortcode } from "@/lib/scrape-job-store"
-import { runScrapeJob } from "@/lib/scrape-job-runner"
+import { runApifyScrapeJob } from "@/lib/apify/apify-scraper"
+import { validateApifyConfig } from "@/lib/apify/apify-config"
+import { MOCK_ENABLED, generateMockPostInfo } from "@/lib/mock/mock-data"
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +25,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const shortcode = extractShortcode(url)
+    // Strip query params before extracting shortcode (handles ?igsh=, &utm_source=, etc.)
+    const cleanUrl = url.split("?")[0]
+    const shortcode = extractShortcode(cleanUrl)
     if (!shortcode) {
       return NextResponse.json(
         { error: "URL de Instagram invalida. Usa una URL de post, reel o carrusel." },
@@ -31,9 +35,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Mock mode: skip real IG API + Apify validation
+    if (MOCK_ENABLED) {
+      const postInfo = generateMockPostInfo(shortcode)
+
+      let jobId: string | null = null
+      const existing = getJobByShortcode(shortcode)
+      if (existing) {
+        jobId = existing.jobId
+      } else {
+        jobId = createJob(shortcode, postInfo.mediaId, postInfo.commentCount)
+        runApifyScrapeJob(jobId).catch(console.error)
+      }
+
+      return NextResponse.json({ post: postInfo, jobId })
+    }
+
+    // Real mode: validate Apify + fetch real post info
+    const apifyValidation = validateApifyConfig()
+    if (!apifyValidation.valid) {
+      return NextResponse.json(
+        { error: apifyValidation.error },
+        { status: 500 },
+      )
+    }
+
     const postInfo = await scrapePostInfo(shortcode)
 
-    // Auto-start scraping job in background
+    // Auto-start Apify scraping job in background
     let jobId: string | null = null
     try {
       const existing = getJobByShortcode(shortcode)
@@ -41,7 +70,7 @@ export async function POST(request: NextRequest) {
         jobId = existing.jobId
       } else {
         jobId = createJob(shortcode, postInfo.mediaId, postInfo.commentCount)
-        runScrapeJob(jobId).catch(console.error) // fire-and-forget
+        runApifyScrapeJob(jobId).catch(console.error) // fire-and-forget
       }
     } catch {
       // Best-effort — don't fail the verify because of job creation

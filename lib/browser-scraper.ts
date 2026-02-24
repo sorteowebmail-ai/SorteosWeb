@@ -9,7 +9,7 @@ import {
   InstagramPermanentError,
   InstagramTransientError,
 } from "./scraper"
-import type { ScrapedComment } from "./scraper"
+import type { ScrapedComment, ReplySummary } from "./scraper"
 
 const IG_APP_ID = "936619743392459"
 
@@ -30,6 +30,7 @@ export async function scrapeCommentsBrowser(
   hasMore: boolean
   cursor?: string
   total?: number
+  replySummary: ReplySummary
   source: "browser"
 }> {
   if (!(await isPlaywrightAvailable())) {

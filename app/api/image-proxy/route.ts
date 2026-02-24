@@ -12,6 +12,8 @@ const ALLOWED_HOSTS = [
   "cdninstagram.com",
   "instagram.com",
   "fbcdn.net",
+  "picsum.photos",  // mock mode placeholder images
+  "fastly.picsum.photos",
 ]
 
 // In-memory cache: url → { data, contentType, cachedAt }
